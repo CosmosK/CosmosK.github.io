@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="对于互联网传输的敏感信息应采取加密方式传输，如用户名、密码、卡号、ID等。请求中含有敏感信息（如订单号、ID等），应加密处理后传输，防止产生参数遍历获取信息风险。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞名称：脆弱的加密方式">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%84%86%E5%BC%B1%E7%9A%84%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="对于互联网传输的敏感信息应采取加密方式传输，如用户名、密码、卡号、ID等。请求中含有敏感信息（如订单号、ID等），应加密处理后传输，防止产生参数遍历获取信息风险。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-28T13:49:58.000Z">
+<meta property="article:modified_time" content="2020-02-28T13:53:52.499Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="不安全的数据传输">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%84%86%E5%BC%B1%E7%9A%84%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>漏洞名称：脆弱的加密方式 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%84%86%E5%BC%B1%E7%9A%84%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漏洞名称：脆弱的加密方式
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 21:49:58 / 修改时间：21:53:52" itemprop="dateCreated datePublished" datetime="2020-02-28T21:49:58+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">对于互联网传输的敏感信息应采取加密方式传输，如用户名、密码、卡号、ID等。请求中含有敏感信息（如订单号、ID等），应加密处理后传输，防止产生参数遍历获取信息风险。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：对于互联网传输的敏感信息应采取加密方式传输，如用户名、密码、卡号、ID等。请求中含有敏感信息（如订单号、ID等），应加密处理后传输，防止产生参数遍历获取信息风险。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>按照密码体制的不同，密码学算法可以分为以下三类：</p>
+<ul>
+<li>分组加密。分组加密也成为块加密，是将明文消息划分为长度为n的组，n值根据算法的不同而变化，每组分别在密钥的控制下变换成长度相等的输出数字序列。如对称加密的DES、AES等算法，非对称加密算法RSA</li>
+<li>流加密。流加密使用伪随机数生成器（PRNG）根据密钥生成一个与明文长度相同的密钥流，然后使用密钥流与明文流进行异或运算，如RC4等堆成加密算法属于流加密。常用于视频和音乐等数据的加密。</li>
+<li>量子加密。量子密码学是基于单个光子和它固有量子属性而开发的不可破解的密码体系。量子的不可克隆是量子通信安全的根本来源。</li>
+</ul>
+<p>按密码学的发展大致可以分成以下三个阶段</p>
+<ul>
+<li>早期密码（古典密码）对整个加密过程保密</li>
+<li>现代密码（对称加密），公开算法细节，密码的安全性仅依赖加密密钥</li>
+<li>公钥密码（非对称加密），加密不用秘密钥，秘密钥仅在解密阶段使用</li>
+</ul>
+<h3 id="0x01-对称加密算法"><a href="#0x01-对称加密算法" class="headerlink" title="0x01 对称加密算法"></a>0x01 对称加密算法</h3><ul>
+<li><p><strong>DES/3DES</strong></p>
+<p>DES是现代第一个对称加密算法。属于分组密码，明文分组长度为64位，产生的密文长度为64位，有效密钥长度为56位。DES被认为仅有的最严重的缺点就是密钥长度太短，有效长度只有56位，易遭受穷举密钥攻击，即利用一个已知明文或密文进行穷举测试，直到找到正确的密钥。为了弥补DES的缺陷，衍生了3DES算法，原理是对明文先加密，再解密，最后再加密，三次加解密操作推荐使用不同的密钥，其有效长度相当于112位。</p>
+<p>由于DES的缺陷，严禁使用DES进行加解密操作，虽然3DES对DES进行了加强，但密钥长度仍不能满足安全的需求（要求密钥最小长度为128位），因此，除非强制要求，尽量不要使用3DES。此外经过3*16轮的变换，3DES的加解密效率也比较低。</p>
+</li>
+<li><p><strong>AES</strong></p>
+<p>AES算法有以下特征：</p>
+<ul>
+<li>属于分组加密</li>
+<li>分组长度和密长度均独立可变</li>
+<li>轮变换次数根据密钥及分组长度而定，例128位长度的密钥需要10次轮变换，256位需14次论变换</li>
+<li>轮密钥根据公开密钥表导出，不同轮密钥的长度不同</li>
+<li>算法公开</li>
+</ul>
+<p>AES的加密依赖四个可逆函数：</p>
+<ul>
+<li>SubBytes字节替换</li>
+<li>ShiftRow行移位</li>
+<li>MixColumns 列混合变换</li>
+<li>AddRoundKey 轮密钥加变换</li>
+</ul>
+<p>AES是目前对称加密最常用的加密算法，使用时要求最小密钥长度为128位，可变的密钥长度及分组长度为各种应用需求提供了可选的安全强度，同时密钥的减少不仅简化了安全协议和系统的设计，也提升了加密和解密的效率。</p>
+</li>
+</ul>
+<h3 id="0x02-非对称加密算法"><a href="#0x02-非对称加密算法" class="headerlink" title="0x02 非对称加密算法"></a>0x02 非对称加密算法</h3><p>非对称加密是基于数学难题进行构建，主要是基于以下三个数学难题：</p>
+<p>1). 大整数分解（IFP)，用于RSA</p>
+<p>2). 离散对数问题（DLP），用于DH、DHA和DSA</p>
+<p>3). 椭圆曲线离散对数问题（ECDLP），用于ECC、ECDH、ECDHE和ESDSA</p>
+<ul>
+<li><p><strong>RSA</strong></p>
+<p>RSA算法既可以用于密钥交换，又可以用于验证签名，即RSA私钥加密得数据所对应得RSA公钥可以解密该数据，并验证该数据是否为RSA私钥加密，相当于签名得效果，反之公钥加密得数据只有对应得私钥能够解密。</p>
+<p>基于安全性的考虑，推荐RSA密钥最小长度为2048位。目前RSA主要用于签名和验证认证，不用于密钥交换，因为RSA无法保证前向保密性。</p>
+</li>
+<li><p><strong>DH</strong></p>
+<p>对称密码系统最难解决的问题便是密钥交换问题，DH（Diffie-Hellman）指数密钥交换协议，是第一个无需安全信道就能实现密钥交换的方案。但实际应用中很少直接只用DH进行密钥交换，因为DH无法保证前向保密性。</p>
+</li>
+<li><p><strong>DHE</strong></p>
+<p>DHE全称为Ephemeral Diffie-Hellman，与DH交换密钥的方式相同，主要区别在于用于生成本地对称密钥的参数都是临时生成的，并且不会保存，即保证了前向保密性。推荐DHE的最小密钥长度位2048位。</p>
+</li>
+<li><p><strong>DSA</strong></p>
+<p>DSA是Schnorr、ELGamal签名算法的变种，被NIST作为数字签名标准（DSS)。DSA基于整数有限域离散对数难题，安全性与RSA相当，因此推荐DSA的最小密钥长度为2048位。由于DSA的安全性依赖于熵源的选择，基于安全性及便利性的考虑，一般使用RSA进行数字签名。</p>
+</li>
+<li><p><strong>ECC</strong></p>
+<p>椭圆曲线加密算法（ECC)基于椭圆曲线离散对数问题，给定椭圆曲线上的一个点G，并选择一个整数k，易求解K=k*G，其中K也是椭圆曲线上的一个点。但是反过来，知道椭圆曲线上的两个点K、G，求解k是一个难题，所以被称为椭圆曲线离散对数问题。</p>
+</li>
+<li><p><strong>ECDH</strong></p>
+<p>ECDH是基于椭圆曲线离散对数问题的密钥交换算法。与DH相比，其便利性在于将复杂的求幂运算转化为简单的乘法（累加）运算，且在同等密钥长度的前提下，其安全性远高于DH。推荐ECDH的最小密钥长度为256位，ECDH不能保证前向保密性，因此实际应用中很少直接使用ECDH进行密钥交换。</p>
+</li>
+<li><p><strong>ECDHE</strong></p>
+<p>ECDHE与ECDH交换密钥的方式相同，主要区别在于生成本地对称密钥的参数都是临时生成的，并且不会保存，这样保证了前向保密性。推荐使用ECDHE的最小密钥长度位256位。ECDHE是目前交换密钥的推荐算法。</p>
+</li>
+<li><p><strong>ECDSA</strong></p>
+<p>ECDSA与DSA类似，是基于椭圆曲线离散对数问题实现的签名算法，推荐最小密钥长度位256位，与DSA类似，其安全性依赖于熵源的选择，基于安全性和便利性考虑，一般使用RSA进行数字签名。</p>
+</li>
+</ul>
+<h3 id="0x03-传输层安全检测工具"><a href="#0x03-传输层安全检测工具" class="headerlink" title="0x03 传输层安全检测工具"></a>0x03 传输层安全检测工具</h3><p>可以使用多种工具对网站传输层的安全进行检测，检测工具可以分为两种：本地工具和在线工具，常见工具如下：</p>
+<ul>
+<li><p><strong>本地工具</strong></p>
+<p>O-Saft：<a href="https://www.owasp.org/index.php/O-Saft" target="_blank" rel="noopener">https://www.owasp.org/index.php/O-Saft</a></p>
+<p>SSLScan：<a href="http://sourceforge.net/projects/sslscan" target="_blank" rel="noopener">http://sourceforge.net/projects/sslscan</a></p>
+<p>SSLyze：<a href="https://github.com/iSECPartners/sslyze" target="_blank" rel="noopener">https://github.com/iSECPartners/sslyze</a></p>
+<p>SSL Audit：<a href="http://www.g-sec.lu/tools.html" target="_blank" rel="noopener">http://www.g-sec.lu/tools.html</a></p>
+</li>
+<li><p><strong>在线工具</strong></p>
+<p>SSL Server Test：<a href="https://www.ssllabs.com/ssltest" target="_blank" rel="noopener">https://www.ssllabs.com/ssltest</a></p>
+<p>Observatory by Mozilla：<a href="https://observatory.mozilla.org/" target="_blank" rel="noopener">https://observatory.mozilla.org/</a></p>
+<p>High-Tech Bridge：<a href="https://www.htbridge.com/ssl/" target="_blank" rel="noopener">https://www.htbridge.com/ssl/</a></p>
+</li>
+</ul>
+<p>下面使用在线工具对传输层的安全进行检测。以<a href="https://secrettest.gaiaworkforce.com为例" target="_blank" rel="noopener">https://secrettest.gaiaworkforce.com为例</a></p>
+<p><strong>证书消息</strong>  证书为SHA-256证书、密钥长度为2048位，符合传输层的安全标准</p>
+<p><strong>协议支持</strong>  不支持SSL2.0、SSL3.0协议，支持TLS1.0-1.2</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93/" rel="tag"># 不安全的数据传输</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%8D%E5%8A%A1%E5%99%A8JBoss%E3%80%81WebSphere%E3%80%81WebLogin%E7%AD%89/" rel="prev" title="漏洞名称：服务器JBoss、WebSphere、WebLogin等">
+      <i class="fa fa-chevron-left"></i> 漏洞名称：服务器JBoss、WebSphere、WebLogin等
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E7%99%BB%E5%BD%95%E4%BF%A1%E6%81%AF%E4%B8%8D%E5%BA%94%E5%86%99%E5%85%A5URL/" rel="next" title="漏洞名称：登录信息不应写入URL">
+      漏洞名称：登录信息不应写入URL <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-前言"><span class="nav-text">0x00 前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-对称加密算法"><span class="nav-text">0x01 对称加密算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-非对称加密算法"><span class="nav-text">0x02 非对称加密算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-传输层安全检测工具"><span class="nav-text">0x03 传输层安全检测工具</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

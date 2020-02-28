@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞名称：未启用会话超时功能">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-28T14:28:16.000Z">
+<meta property="article:modified_time" content="2020-02-28T14:30:14.994Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="会话管理">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>漏洞名称：未启用会话超时功能 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漏洞名称：未启用会话超时功能
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 22:28:16 / 修改时间：22:30:14" itemprop="dateCreated datePublished" datetime="2020-02-28T22:28:16+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>安全性：中</p>
+<p>漏洞类型：会话管理</p>
+<p>安全要求：具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询，个人信息修改等页面，需重新对用户进行认证且会话超时时间不得大于15分钟，认证方式可选择密码、短信等。</p>
+<h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>为了控制攻击者对活动会话的攻击及劫持时间为最小，必须为每个会话设置过期时间。如果Web应用程序的会话过期设置不足，将会增加基于会话的攻击风险，因为攻击者可以重用有效的会话ID并劫持关联的会话。</p>
+<p>会话间隔越短，攻击者能使用有效会话ID的时间就越少。会话过期时间需要根据Web应用程序的目的与特性进行设置，并在安全性和可用性之间取得平衡，保证用户可以轻松的完成Web应用程序的操作，不会频繁因为会话过期而中断操作。空闲时间与过期时间与web应用程序的重要性密切相关，对于高风险应用，常用的闲置时间范围为2-5分钟，而低风险的应用程序则为15-30分钟。当会话到期时，web应用程序必须主动采取措施来使客户端与服务端的会话失效。</p>
+<h3 id="0x01-会话过期方式"><a href="#0x01-会话过期方式" class="headerlink" title="0x01 会话过期方式"></a>0x01 会话过期方式</h3><h4 id="1-1-自动会话超时"><a href="#1-1-自动会话超时" class="headerlink" title="1.1 自动会话超时"></a>1.1 自动会话超时</h4><ul>
+<li><p><strong>空闲超时</strong></p>
+<p>在Web应用程序中，所有会话都应该实现空闲或者不活动超时，此超时定义了会话在没有活动的情况下所保持的时间，即给定的会话ID从接收到最后一个HTTP请求到它失效的这段空闲时间。空闲超时限制了攻击者猜测和使用来自用户的有效会话ID的可能性，但是，如果攻击者已经劫持了给定的会话，则空闲超时不会限制攻击者的行为，因为它可以定期进行会话活动，以使会话保持较长时间的活动状态。如果客户端用于执行会话超时，例如使用会话令牌或其他客户端参数作为时间参数，那么攻击者可以操纵这些参数以延长会话的持续时间，因此会话超时管理必须在服务端进行。</p>
+</li>
+<li><p><strong>绝对超时</strong></p>
+<p>无论会话活动如何，所有绘画都会被实现绝对超时。此超时定义了会话可以处于活动状态的最长时间，从Web应用创建会话开始计时，定义绝对时间段内关闭会话。会话无效后，用户只能在web应用程序中再次进行认证并建立新的会话。绝对会话限制了攻击者可以使用别劫持会话及冒充受害者的时间。</p>
+</li>
+<li><p><strong>更新超时</strong></p>
+<p>Web应用程序可以实现额外的更新超时，实现会话ID的自动更新，它在用户会话有效期期间内独立于会话活动，因此与空闲超时无关。在最初创建的特定时间段之后，web应用程序可以为用户会话重新生成一个新的会话ID，并尝试在客户端上对其进行设置及更新。在客户端知道新ID并开始使用之前，旧的会话ID仍然有效；客户端切换到新ID，应用程序将使先前的ID失效。</p>
+<p>这种机制减少了给定会话ID的使用时间，特别是会话ID被攻击者劫持的时间。如果用户会话在合法的客户端上打开并保持活动，那么每当更新超时到期，会定期更新其关联的会话ID。因此，更新超时补充了空闲超时和绝对超时，特别是绝对超时随着会话时间进行扩展时。</p>
+<p>但这种也存在竞争的情况：攻击者使用先前有效的会话ID在受害者之前发送请求，紧接着更新超时到期，这样攻击者就是先一步的到更新的会话ID值。但这种情况下，用户的会话ID会突然终止，关联的ID会突然失效，至少让用户意识到了自己遭受到了攻击。</p>
+</li>
+</ul>
+<h4 id="1-2-手动会话超时"><a href="#1-2-手动会话超时" class="headerlink" title="1.2 手动会话超时"></a>1.2 手动会话超时</h4><p>​    web应用程序应该提供一种机制，让用户完成完web应用程序后主动关闭会话。 </p>
+<p>​    注销按钮：Web应用程序必须提供一个可见的易于访问的注销按钮，一般时放置程序的头部或菜单上，        并且可以从每个资源或页面上访问，让用户可以在任何时候手动关闭会话。如上所述，Web应用程序必须在    服务端使会话无效。</p>
+<p>​    注：并非每个程序都实现了便于关闭会话的机制，用户可以使用增强功能去注销会话。比如FireFox浏览器的附加组件PopU Logout。</p>
+<h4 id="1-3-网页内容缓存"><a href="#1-3-网页内容缓存" class="headerlink" title="1.3 网页内容缓存"></a>1.3 网页内容缓存</h4><p>会话关闭后可以通过Web浏览器的缓存来访问会话内交换的隐私数据，所以Web应用程序必须对HTTP和HTTPS交换的所有Web流量使用限制缓存指令，如HTTP头或META标签使用Cache-Control:no-cache,no-store和Pragma:no-cache配置。</p>
+<p>如果允许缓存，允许Web客户端缓存除会话ID外的所有内容。</p>
+<h3 id="0x02-思考？"><a href="#0x02-思考？" class="headerlink" title="0x02 思考？"></a>0x02 思考？</h3><p><u>如何实现主动式会话过期提醒？？</u></p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/" rel="tag"># 会话管理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E5%9B%BA%E5%AE%9A/" rel="prev" title="漏洞名称：会话固定">
+      <i class="fa fa-chevron-left"></i> 漏洞名称：会话固定
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%B4%A6%E5%8F%B7%E5%8F%AF%E5%90%8C%E6%97%B6%E7%99%BB%E5%BD%95/" rel="next" title="漏洞名称：账号可同时登录">
+      漏洞名称：账号可同时登录 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-前言"><span class="nav-text">0x00 前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-会话过期方式"><span class="nav-text">0x01 会话过期方式</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-自动会话超时"><span class="nav-text">1.1 自动会话超时</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-手动会话超时"><span class="nav-text">1.2 手动会话超时</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-网页内容缓存"><span class="nav-text">1.3 网页内容缓存</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-思考？"><span class="nav-text">0x02 思考？</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

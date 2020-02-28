@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="CSRF跨站攻击涉及三个角色：受信任的网站（Collabtive)、受害者的session或cookie和恶意网站">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞名称：CSRF跨站">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACSRF%E8%B7%A8%E7%AB%99/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="CSRF跨站攻击涉及三个角色：受信任的网站（Collabtive)、受害者的session或cookie和恶意网站">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-02-28T14:12:23.000Z">
+<meta property="article:modified_time" content="2020-02-28T14:13:41.737Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="不安全的配置">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACSRF%E8%B7%A8%E7%AB%99/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>漏洞名称：CSRF跨站 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACSRF%E8%B7%A8%E7%AB%99/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漏洞名称：CSRF跨站
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 22:12:23 / 修改时间：22:13:41" itemprop="dateCreated datePublished" datetime="2020-02-28T22:12:23+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">CSRF跨站攻击涉及三个角色：受信任的网站（Collabtive)、受害者的session或cookie和恶意网站</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><em>【APP服务端安全的注入类检测】</em></p>
+<ul>
+<li>html代码模拟提交form表单，查看功能提交结果</li>
+</ul>
+<p><strong>严重性</strong>：中</p>
+<h3 id="一、-概述"><a href="#一、-概述" class="headerlink" title="一、 概述"></a>一、 概述</h3><p>CSRF(Cross-site request forgery)，中文名称：跨站请求伪造，也被称为：one click attack/session riding,缩写：CSRF/XSRF;</p>
+<p>CSRF跨站攻击涉及三个角色：受信任的网站（Collabtive)、受害者的session或cookie和恶意网站。当受害者与受信任的站点拥有一个活跃的会话的同时，如果访问恶意网站，恶意网站会注入一个HTTP请求到受信任的站点，从而破坏用户的信息。</p>
+<h3 id="二、危害"><a href="#二、危害" class="headerlink" title="二、危害"></a>二、危害</h3><p>个人隐私泄露以及财产安全，以受害者的名义发送邮件、消息、盗取账号，甚至于购买商品，虚拟货币转账等。</p>
+<h3 id="三、CSRF攻击过程有以下两个重点"><a href="#三、CSRF攻击过程有以下两个重点" class="headerlink" title="三、CSRF攻击过程有以下两个重点"></a>三、CSRF攻击过程有以下两个重点</h3><ul>
+<li>目标用户已经登录了网站，能够执行网站的功能</li>
+<li>目标用户访问了攻击者构造的URL </li>
+</ul>
+<h3 id="四、环境搭建"><a href="#四、环境搭建" class="headerlink" title="四、环境搭建"></a>四、环境搭建</h3><ol>
+<li><p>启动mysql服务器</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo mysqld_safe</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>启动服务</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service apache2 start</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>配置DNS解析</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/hosts</span><br></pre></td></tr></tbody></table></figure>
+
+<p>添加以下内容：</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1                        www.csrflabattacker.com</span><br><span class="line">127.0.0.1                        www.csrflabelgg.com</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>网站配置</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/apache2/conf.d/lab.conf</span><br></pre></td></tr></tbody></table></figure>
+
+<figure class="highlight xml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">VirtualHost</span> *<span class="attr">:80</span>&gt;</span></span><br><span class="line">ServerName www.csrflabattacker.com</span><br><span class="line">DocumentRoot /var/www/CSRF/Attacker/</span><br><span class="line"><span class="tag">&lt;/<span class="name">VirtualHost</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">VirtualHost</span> *<span class="attr">:80</span>&gt;</span></span><br><span class="line">ServerName www.csrflabelgg.com</span><br><span class="line">DocumentRoot /var/www/CSRF/elgg/</span><br><span class="line"><span class="tag">&lt;/<span class="name">VirtualHost</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>重启服务：</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo service apache2 restart</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>打开Firefox浏览器，分别对<a href="http://www.csrflabattacker.com和www.csrflabelgg.com进行测试访问" target="_blank" rel="noopener">www.csrflabattacker.com和www.csrflabelgg.com进行测试访问</a></p>
+</li>
+<li><p>登录账号</p>
+<table>
+<thead>
+<tr>
+<th>user</th>
+<th>UserName</th>
+<th>Password</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Admin</td>
+<td>admin</td>
+<td>seedelgg</td>
+</tr>
+<tr>
+<td>Alice</td>
+<td>alice</td>
+<td>seedalice</td>
+</tr>
+<tr>
+<td>Boby</td>
+<td>boby</td>
+<td>seedboby</td>
+</tr>
+<tr>
+<td>Charlie</td>
+<td>charlie</td>
+<td>seedcharlie</td>
+</tr>
+<tr>
+<td>Samy</td>
+<td>samy</td>
+<td>seedsamy</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>安装live http headers工具</p>
+<p>下载地址：<a href="http://labfile.oss.aliyuncs.com/courses/304/live_http_headers.xpi" target="_blank" rel="noopener">http://labfile.oss.aliyuncs.com/courses/304/live_http_headers.xpi</a></p>
+</li>
+<li><p>打开Firefox浏览器，点击Tools-&gt;Add-ons</p>
+</li>
+<li><p>点击Tools  for all add-ons-&gt;Install add-ons From File…</p>
+</li>
+<li><p>选择Install now，并重启浏览器</p>
+</li>
+<li><p>当tools中出现Live Http headeers即安装成功</p>
+</li>
+<li><p>点击即可就可以使用这个抓包工具，之后访问网站就要可以在窗口中看抓取信息了。</p>
+<p>​     </p>
+</li>
+</ol>
+<h3 id="五、CSRF攻击示例"><a href="#五、CSRF攻击示例" class="headerlink" title="五、CSRF攻击示例"></a>五、CSRF攻击示例</h3><p>用户Alice想和Boby成为好友，但Alice拒绝添加Boby。这时候Boby向Alice发送一个URL，当Alice访问URL即自动将Boby添加到好友列表中。</p>
+<ol>
+<li><p>如何添加好友</p>
+</li>
+<li><p>分析抓取到的数据包</p>
+<ol>
+<li><p>添加Boby用户的连接</p>
+<figure class="highlight html"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.csrflabelgg.com/action/friends/add?friend=40&amp;__elgg_ts=1524817660&amp;__elgg_token=f581b9c0b6fab2aa1c5b5c64a7b4cf0c</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>构造一个页面，让Alice访问，就会点击boby添加为好友</p>
+<figure class="highlight shell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /var/www/CSRF/Attacker/hack.html</span><br></pre></td></tr></tbody></table></figure>
+
+<p>代码如下：</p>
+<figure class="highlight html"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"http://www.csrflabelgg.com/action/friends/add?friend=40&amp;__elgg_ts=1524817660&amp;__elgg_token=f581b9c0b6fab2aa1c5b5c64a7b4cf0c"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ol>
+</li>
+<li><p>访问之前</p>
+</li>
+</ol>
+<p>   Alice访问<a href="http://www.csrflabattacker.com/hack.html" target="_blank" rel="noopener">www.csrflabattacker.com/hack.html</a></p>
+<ol>
+<li>访问之后，查看<a href="http://www.csrflabelgg.com/firends/alice" target="_blank" rel="noopener">www.csrflabelgg.com/firends/alice</a></li>
+</ol>
+<h3 id="六、CSRF漏洞修复建议"><a href="#六、CSRF漏洞修复建议" class="headerlink" title="六、CSRF漏洞修复建议"></a>六、CSRF漏洞修复建议</h3><ul>
+<li>验证请求的Referer值，如果Referer是以自己的网站开头的域名，则说明该请求来自于网站自己，是合法的。如果Referer是其他网站域名或空白，就有可能是CSRF攻击，那么服务器应拒绝该请求，但是此方法存在被绕过的可能。</li>
+<li>CSRF攻击之所以能够成功，是因为攻击者可以伪造用户的请求，防御CSRF的关键在于：在请求中放入攻击者不能伪造的信息。例如可以在HTTP请求中以参数的形式加入一个随机产生的token，并在服务器端验证token，如果请求中没有token或者token的内容不正确，则认为该请求可能是CSRF攻击而拒绝该请求。</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E9%85%8D%E7%BD%AE/" rel="tag"># 不安全的配置</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACookie%E4%B8%8A%E6%9C%AA%E8%AE%BE%E7%BD%AEHttpOnly-Flag/" rel="prev" title="漏洞名称：Cookie上未设置HttpOnly Flag">
+      <i class="fa fa-chevron-left"></i> 漏洞名称：Cookie上未设置HttpOnly Flag
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ASQL%E6%B3%A8%E5%85%A5/" rel="next" title="漏洞名称：SQL注入">
+      漏洞名称：SQL注入 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#一、-概述"><span class="nav-text">一、 概述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二、危害"><span class="nav-text">二、危害</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#三、CSRF攻击过程有以下两个重点"><span class="nav-text">三、CSRF攻击过程有以下两个重点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#四、环境搭建"><span class="nav-text">四、环境搭建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#五、CSRF攻击示例"><span class="nav-text">五、CSRF攻击示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#六、CSRF漏洞修复建议"><span class="nav-text">六、CSRF漏洞修复建议</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

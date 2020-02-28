@@ -1196,7 +1196,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #fec646;
+  background: #30ffff;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -1501,10 +1501,7 @@ pre .javascript .function {
   position: fixed;
   transition-property: bottom;
   z-index: 1300;
-  width: 24px;
-}
-.back-to-top span {
-  display: none;
+  width: initial;
 }
 .back-to-top:hover {
   color: #fc6423;
@@ -2311,7 +2308,7 @@ ul.breadcrumb li + li:last-child {
 }
 .header-inner {
   position: absolute;
-  background: whilte;
+  background: var(--content-bg-color);
   border-radius: initial;
   box-shadow: initial;
   overflow: hidden;
