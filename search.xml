@@ -1,6 +1,260 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>XSS攻击方式及防御措施</title>
+    <url>/2020/02/29/XSS%E6%94%BB%E5%87%BB%E6%96%B9%E5%BC%8F%E5%8F%8A%E9%98%B2%E5%BE%A1%E6%8E%AA%E6%96%BD/</url>
+    <content><![CDATA[<h3 id="0x01-前端XSS攻击分类"><a href="#0x01-前端XSS攻击分类" class="headerlink" title="0x01 前端XSS攻击分类"></a>0x01 前端XSS攻击分类</h3><ul>
+<li><p>什么是XSS?</p>
+<p>XSS允许恶意的Web用户将代码植入到提供给其他用户使用的页面中</p>
+<ol>
+<li>攻击者往网页里注入恶意脚本代码</li>
+<li>当用户访问包含恶意代码的网页时</li>
+<li>通过恶意脚本攻击者可以获取和控制用户信息</li>
+</ol>
+</li>
+<li><p>XSS分类</p>
+<ol>
+<li><p>反射型（非持久型）XSS</p>
+<p>​    诱导用户点击带有恶意脚本的URL，而服务器直接使用了恶意脚本并返回了结果页，从而导致恶意代码在浏览器执行。</p>
+<p>​    点击恶意URL，导致恶意代码的执行。</p>
+</li>
+</ol>
+</li>
+</ul>
+<p>  ​    src=“js”发送一个ajax请求，获取信息。</p>
+<p>  注：防止XSS获取Cookie值得方式，去设置一个httponly标志，防止客户端获取cookie。</p>
+<ol>
+<li><p>存储型（持久型）XSS</p>
+<p>将恶意代码上传或存储到了漏洞服务器上，用户访问页面时，页面中包含恶意脚本。</p>
+</li>
+<li><p>攻击者将恶意代码上传到服务器</p>
+<ol>
+<li>访问包含恶意脚本的页面</li>
+</ol>
+</li>
+<li><p>服务器读取恶意数据且直接使用</p>
+<ol>
+<li>服务器未防范返回含有恶意脚本的页面</li>
+</ol>
+<p>注：绕过前端或后台得验证存储在服务器上，其他用户进行访问时，得以执行恶意程序。</p>
+</li>
+<li><p>DOM-Based型XSS</p>
+<p>由于客户端Javascript脚本修改页面DOM结构时（修改文本、重绘、重排）引起浏览器DOM解析所造成的一种漏洞攻击</p>
+<ol>
+<li>用户打开含有恶意的连接</li>
+<li>浏览器在DOM解析时直接使用恶意数据</li>
+<li>用户受到攻击</li>
+</ol>
+</li>
+</ol>
+<h3 id="0x02-XSS防御措施"><a href="#0x02-XSS防御措施" class="headerlink" title="0x02 XSS防御措施"></a>0x02 XSS防御措施</h3><ul>
+<li><p>设置httpOnly</p>
+<p>在客户端无法获取cookies信息 </p>
+</li>
+<li><p>后台过滤</p>
+<ul>
+<li>判断输入格式，只允许特定格式的字符  //对标签进行处理，转成文本化htmlspciachars,特殊字符转义处理。服务端过滤</li>
+<li>收到数据时过滤危险字符</li>
+<li>过滤与转义需前端和服务端配合使用</li>
+</ul>
+<p>对URl和提交表单均进行校验。</p>
+<p>设置一些白明单和黑名单进行过滤一些标记。</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>基础知识</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>避免重复提交表单</title>
+    <url>/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/</url>
+    <content><![CDATA[<h3 id="0x01-前端控制"><a href="#0x01-前端控制" class="headerlink" title="0x01 前端控制"></a>0x01 前端控制</h3><ol>
+<li>点击提交按钮后，进行页面跳转</li>
+<li>点击之后，提交按钮不可以</li>
+<li>session验证</li>
+</ol>
+<h3 id="0x02-后端控制"><a href="#0x02-后端控制" class="headerlink" title="0x02 后端控制"></a>0x02 后端控制</h3><ol>
+<li>对session的值的验证进行控制，如果session失效，重新生成</li>
+<li>如果没有session则重新生成session</li>
+<li>若是session值相同，则就可以提示相同，请勿重复提交</li>
+</ol>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>基础知识</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>CORS（跨域资源共享）</title>
+    <url>/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/</url>
+    <content><![CDATA[<p>通过代理实现跨域过程</p>
+<ul>
+<li>Nignx代理</li>
+<li>Node中间件代理http-proxy-middleware</li>
+</ul>
+<figure class="highlight javascript"><table><tbody><tr><td class="code"><pre><span class="line"><span class="comment">// javascript</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);<span class="comment">//express是node中得一个框架</span></span><br><span class="line"><span class="keyword">const</span> { createProxyMiddleware } = <span class="built_in">require</span>(<span class="string">'http-proxy-middleware'</span>);<span class="comment">//引用中间件http-proxy-middleware</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> app = express();</span><br><span class="line"></span><br><span class="line">app.use(<span class="string">'/api'</span>, createProxyMiddleware({ <span class="attr">target</span>: <span class="string">'http://www.example.org'</span>, <span class="attr">changeOrigin</span>: <span class="literal">true</span> }));<span class="comment">///api请求发起的路径</span></span><br><span class="line">app.listen(<span class="number">3000</span>);<span class="comment">//http目标指向</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// http://localhost:3000/api/foo/bar -&gt; http://www.example.org/api/foo/bar</span></span><br></pre></td></tr></tbody></table></figure>
+
+<p>监听得接收3000端口，然后跳转请求到 <a href="http://www.example.org/api/foo/bar" target="_blank" rel="noopener">http://www.example.org/api/foo/bar</a>   </p>
+<p>因为都是在服务器中，所以不会存在跨域，进行代理跳转。</p>
+<h3 id="0x02-实现跨域请求代理"><a href="#0x02-实现跨域请求代理" class="headerlink" title="0x02 实现跨域请求代理"></a>0x02 实现跨域请求代理</h3><p>node中配置,需要node环境</p>
+<p>安装express   <code>npm install express</code></p>
+<p>安装 http-proxy-middleware    <code>npm install http-proxy-middlerware</code></p>
+<figure class="highlight js"><table><tbody><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">"express"</span>);</span><br><span class="line"><span class="keyword">var</span> proxy = <span class="built_in">require</span>(<span class="string">"http-proxy-middleware"</span>)</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.use(<span class="string">"/cross-origin"</span>,</span><br><span class="line">       proxy({<span class="attr">target</span>:<span class="string">"http://www.指定跨域地址"</span>})</span><br><span class="line">       )；</span><br><span class="line">app.listen(<span class="number">3000</span>);<span class="comment">//监听端口</span></span><br></pre></td></tr></tbody></table></figure>
+
+
+
+
+
+
+
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>基础知识</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>同源策略-跨域请求</title>
+    <url>/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/</url>
+    <content><![CDATA[<h3 id="0x01什么是同源策略？"><a href="#0x01什么是同源策略？" class="headerlink" title="0x01什么是同源策略？"></a>0x01什么是同源策略？</h3><p>同源策略（Same origin policy)是一种约定，它是浏览器最核心也是最基本的安全功能，同源指域名、协议、端口需要保持一致才能进行相互间的访问。</p>
+<p>浏览器采用同源策略，禁止页面加载或执行与自身来源不同的域的任何脚本。换句话说，浏览器禁止的是来自不同源的“docment”或脚本，对当前”docment”读取或设置某些属性。</p>
+<ul>
+<li><code>&lt;script&gt; 、&lt;img&gt;、&lt;iframe&gt;、&lt;link&gt;</code>这些包含src属性的标签可以加载跨域资源。但浏览器限制了JavaScript的权限，使其不能读、写加载的内容。</li>
+</ul>
+<h3 id="0x02-什么是跨域请求？"><a href="#0x02-什么是跨域请求？" class="headerlink" title="0x02 什么是跨域请求？"></a>0x02 什么是跨域请求？</h3><p>当发起请求的域和请求资源的域不是同一个的时，就是跨域请求。这里的域指的就是协议+域名+端口</p>
+<h3 id="0x03跨域请求实现方案"><a href="#0x03跨域请求实现方案" class="headerlink" title="0x03跨域请求实现方案"></a>0x03跨域请求实现方案</h3><p>虽然安全层面上同源限制是必要的，但有时同源策略会对我们的合理的用途造成影响，为了避免开发的应用受到限制，有很多种方式可以绕开同源策略</p>
+<ul>
+<li><p>通过JSONP可以实现跨域请求处理过程。jquery得ajax提供了jsonp解决方案，请求类型只能是Get</p>
+</li>
+<li><p>通过CORS来实现跨域请求处理过程</p>
+</li>
+<li><p>通过nginx代理来实现跨域请求处理过程</p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>基础知识</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>会话跟踪</title>
+    <url>/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/</url>
+    <content><![CDATA[<ul>
+<li>session在服务端程序被客户端访问时产生，存在于服务端。</li>
+<li>session具有唯一标识sessionId，在请求中用来重新获得该session.</li>
+<li>session存在后即可向Session中存储数据，这些内容也仅存在于服务端。</li>
+<li>发送客户端的只有sessionid，以后每次客户端发送请求都会携带sessionid。</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>Web安全</category>
+      </categories>
+      <tags>
+        <tag>基础知识</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>解决eclipse中DDMS无法输出Logcat问题</title>
     <url>/2020/02/28/%E8%A7%A3%E5%86%B3eclipse%E4%B8%ADDDMS%E6%97%A0%E6%B3%95%E8%BE%93%E5%87%BALogcat%E9%97%AE%E9%A2%98/</url>
     <content><![CDATA[<p>原因在于adt版本和android版本不兼容，解决办法进行升级ADT版本，升级至ADT-24.2</p>

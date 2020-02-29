@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="https://comosk.github.io/"/>
-  <updated>2020-02-28T15:30:24.343Z</updated>
+  <updated>2020-02-29T04:00:40.839Z</updated>
   <id>https://comosk.github.io/</id>
   
   <author>
@@ -15,6 +15,121 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>XSS攻击方式及防御措施</title>
+    <link href="https://comosk.github.io/2020/02/29/XSS%E6%94%BB%E5%87%BB%E6%96%B9%E5%BC%8F%E5%8F%8A%E9%98%B2%E5%BE%A1%E6%8E%AA%E6%96%BD/"/>
+    <id>https://comosk.github.io/2020/02/29/XSS%E6%94%BB%E5%87%BB%E6%96%B9%E5%BC%8F%E5%8F%8A%E9%98%B2%E5%BE%A1%E6%8E%AA%E6%96%BD/</id>
+    <published>2020-02-29T03:58:27.000Z</published>
+    <updated>2020-02-29T04:00:40.839Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="0x01-前端XSS攻击分类"><a href="#0x01-前端XSS攻击分类" class="headerlink" title="0x01 前端XSS攻击分类"></a>0x01 前端XSS攻击分类</h3><ul><li><p>什么是XSS?</p><p>XSS允许恶意的Web用户将代码植入到提供给其他用户使用的页面中</p><ol><li>攻击者往网页里注入恶意脚本代码</li><li>当用户访问包含恶意代码的网页时</li><li>通过恶意脚本攻击者可以获取和控制用户信息</li></ol></li><li><p>XSS分类</p><ol><li><p>反射型（非持久型）XSS</p><p>​    诱导用户点击带有恶意脚本的URL，而服务器直接使用了恶意脚本并返回了结果页，从而导致恶意代码在浏览器执行。</p><p>​    点击恶意URL，导致恶意代码的执行。</p></li></ol></li></ul><p>  ​    src=“js”发送一个ajax请求，获取信息。</p><p>  注：防止XSS获取Cookie值得方式，去设置一个httponly标志，防止客户端获取cookie。</p><ol><li><p>存储型（持久型）XSS</p><p>将恶意代码上传或存储到了漏洞服务器上，用户访问页面时，页面中包含恶意脚本。</p></li><li><p>攻击者将恶意代码上传到服务器</p><ol><li>访问包含恶意脚本的页面</li></ol></li><li><p>服务器读取恶意数据且直接使用</p><ol><li>服务器未防范返回含有恶意脚本的页面</li></ol><p>注：绕过前端或后台得验证存储在服务器上，其他用户进行访问时，得以执行恶意程序。</p></li><li><p>DOM-Based型XSS</p><p>由于客户端Javascript脚本修改页面DOM结构时（修改文本、重绘、重排）引起浏览器DOM解析所造成的一种漏洞攻击</p><ol><li>用户打开含有恶意的连接</li><li>浏览器在DOM解析时直接使用恶意数据</li><li>用户受到攻击</li></ol></li></ol><h3 id="0x02-XSS防御措施"><a href="#0x02-XSS防御措施" class="headerlink" title="0x02 XSS防御措施"></a>0x02 XSS防御措施</h3><ul><li><p>设置httpOnly</p><p>在客户端无法获取cookies信息 </p></li><li><p>后台过滤</p><ul><li>判断输入格式，只允许特定格式的字符  //对标签进行处理，转成文本化htmlspciachars,特殊字符转义处理。服务端过滤</li><li>收到数据时过滤危险字符</li><li>过滤与转义需前端和服务端配合使用</li></ul><p>对URl和提交表单均进行校验。</p><p>设置一些白明单和黑名单进行过滤一些标记。</p></li></ul><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+    
+    <summary type="html">
+    
+      什么是XSS？有哪些分类？如何防御？
+    
+    </summary>
+    
+    
+      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
+    
+    
+      <category term="基础知识" scheme="https://comosk.github.io/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>避免重复提交表单</title>
+    <link href="https://comosk.github.io/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/"/>
+    <id>https://comosk.github.io/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/</id>
+    <published>2020-02-29T03:55:35.000Z</published>
+    <updated>2020-02-29T03:57:34.693Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="0x01-前端控制"><a href="#0x01-前端控制" class="headerlink" title="0x01 前端控制"></a>0x01 前端控制</h3><ol><li>点击提交按钮后，进行页面跳转</li><li>点击之后，提交按钮不可以</li><li>session验证</li></ol><h3 id="0x02-后端控制"><a href="#0x02-后端控制" class="headerlink" title="0x02 后端控制"></a>0x02 后端控制</h3><ol><li>对session的值的验证进行控制，如果session失效，重新生成</li><li>如果没有session则重新生成session</li><li>若是session值相同，则就可以提示相同，请勿重复提交</li></ol><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+    
+    <summary type="html">
+    
+      避免重复提交表单方法。
+    
+    </summary>
+    
+    
+      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
+    
+    
+      <category term="基础知识" scheme="https://comosk.github.io/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>CORS（跨域资源共享）</title>
+    <link href="https://comosk.github.io/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/"/>
+    <id>https://comosk.github.io/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/</id>
+    <published>2020-02-29T03:36:39.000Z</published>
+    <updated>2020-02-29T03:43:55.891Z</updated>
+    
+    <content type="html"><![CDATA[<p>通过代理实现跨域过程</p><ul><li>Nignx代理</li><li>Node中间件代理http-proxy-middleware</li></ul><figure class="highlight javascript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// javascript</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> express = <span class="built_in">require</span>(<span class="string">'express'</span>);<span class="comment">//express是node中得一个框架</span></span><br><span class="line"><span class="keyword">const</span> { createProxyMiddleware } = <span class="built_in">require</span>(<span class="string">'http-proxy-middleware'</span>);<span class="comment">//引用中间件http-proxy-middleware</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> app = express();</span><br><span class="line"></span><br><span class="line">app.use(<span class="string">'/api'</span>, createProxyMiddleware({ <span class="attr">target</span>: <span class="string">'http://www.example.org'</span>, <span class="attr">changeOrigin</span>: <span class="literal">true</span> }));<span class="comment">///api请求发起的路径</span></span><br><span class="line">app.listen(<span class="number">3000</span>);<span class="comment">//http目标指向</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// http://localhost:3000/api/foo/bar -&gt; http://www.example.org/api/foo/bar</span></span><br></pre></td></tr></tbody></table></figure><p>监听得接收3000端口，然后跳转请求到 <a href="http://www.example.org/api/foo/bar" target="_blank" rel="noopener">http://www.example.org/api/foo/bar</a>   </p><p>因为都是在服务器中，所以不会存在跨域，进行代理跳转。</p><h3 id="0x02-实现跨域请求代理"><a href="#0x02-实现跨域请求代理" class="headerlink" title="0x02 实现跨域请求代理"></a>0x02 实现跨域请求代理</h3><p>node中配置,需要node环境</p><p>安装express   <code>npm install express</code></p><p>安装 http-proxy-middleware    <code>npm install http-proxy-middlerware</code></p><figure class="highlight js"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> express = <span class="built_in">require</span>(<span class="string">"express"</span>);</span><br><span class="line"><span class="keyword">var</span> proxy = <span class="built_in">require</span>(<span class="string">"http-proxy-middleware"</span>)</span><br><span class="line"><span class="keyword">var</span> app = express();</span><br><span class="line">app.use(<span class="string">"/cross-origin"</span>,</span><br><span class="line">       proxy({<span class="attr">target</span>:<span class="string">"http://www.指定跨域地址"</span>})</span><br><span class="line">       )；</span><br><span class="line">app.listen(<span class="number">3000</span>);<span class="comment">//监听端口</span></span><br></pre></td></tr></tbody></table></figure><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+    
+    <summary type="html">
+    
+      通过代理实现跨域过程
+    
+    </summary>
+    
+    
+      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
+    
+    
+      <category term="基础知识" scheme="https://comosk.github.io/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>同源策略-跨域请求</title>
+    <link href="https://comosk.github.io/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/"/>
+    <id>https://comosk.github.io/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/</id>
+    <published>2020-02-29T03:27:08.000Z</published>
+    <updated>2020-02-29T03:30:29.613Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="0x01什么是同源策略？"><a href="#0x01什么是同源策略？" class="headerlink" title="0x01什么是同源策略？"></a>0x01什么是同源策略？</h3><p>同源策略（Same origin policy)是一种约定，它是浏览器最核心也是最基本的安全功能，同源指域名、协议、端口需要保持一致才能进行相互间的访问。</p><p>浏览器采用同源策略，禁止页面加载或执行与自身来源不同的域的任何脚本。换句话说，浏览器禁止的是来自不同源的“docment”或脚本，对当前”docment”读取或设置某些属性。</p><ul><li><code>&lt;script&gt; 、&lt;img&gt;、&lt;iframe&gt;、&lt;link&gt;</code>这些包含src属性的标签可以加载跨域资源。但浏览器限制了JavaScript的权限，使其不能读、写加载的内容。</li></ul><h3 id="0x02-什么是跨域请求？"><a href="#0x02-什么是跨域请求？" class="headerlink" title="0x02 什么是跨域请求？"></a>0x02 什么是跨域请求？</h3><p>当发起请求的域和请求资源的域不是同一个的时，就是跨域请求。这里的域指的就是协议+域名+端口</p><h3 id="0x03跨域请求实现方案"><a href="#0x03跨域请求实现方案" class="headerlink" title="0x03跨域请求实现方案"></a>0x03跨域请求实现方案</h3><p>虽然安全层面上同源限制是必要的，但有时同源策略会对我们的合理的用途造成影响，为了避免开发的应用受到限制，有很多种方式可以绕开同源策略</p><ul><li><p>通过JSONP可以实现跨域请求处理过程。jquery得ajax提供了jsonp解决方案，请求类型只能是Get</p></li><li><p>通过CORS来实现跨域请求处理过程</p></li><li><p>通过nginx代理来实现跨域请求处理过程</p></li></ul><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+    
+    <summary type="html">
+    
+      当发起请求的域和请求资源的域不是同一个的时，就是跨域请求。
+    
+    </summary>
+    
+    
+      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
+    
+    
+      <category term="基础知识" scheme="https://comosk.github.io/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>会话跟踪</title>
+    <link href="https://comosk.github.io/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/"/>
+    <id>https://comosk.github.io/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/</id>
+    <published>2020-02-29T03:24:24.000Z</published>
+    <updated>2020-02-29T03:26:20.740Z</updated>
+    
+    <content type="html"><![CDATA[<ul><li>session在服务端程序被客户端访问时产生，存在于服务端。</li><li>session具有唯一标识sessionId，在请求中用来重新获得该session.</li><li>session存在后即可向Session中存储数据，这些内容也仅存在于服务端。</li><li>发送客户端的只有sessionid，以后每次客户端发送请求都会携带sessionid。</li></ul><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
+    
+    <summary type="html">
+    
+      sessionid相对于cookie安全，因为只在客户端存储了sessionId。
+    
+    </summary>
+    
+    
+      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
+    
+    
+      <category term="基础知识" scheme="https://comosk.github.io/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/"/>
+    
+  </entry>
   
   <entry>
     <title>解决eclipse中DDMS无法输出Logcat问题</title>
@@ -364,121 +479,6 @@
     
     
       <category term="敏感信息泄露" scheme="https://comosk.github.io/tags/%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>漏洞名称：Tomcat示例文件未删除</title>
-    <link href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ATomcat%E7%A4%BA%E4%BE%8B%E6%96%87%E4%BB%B6%E6%9C%AA%E5%88%A0%E9%99%A4/"/>
-    <id>https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9ATomcat%E7%A4%BA%E4%BE%8B%E6%96%87%E4%BB%B6%E6%9C%AA%E5%88%A0%E9%99%A4/</id>
-    <published>2020-02-28T14:59:10.000Z</published>
-    <updated>2020-02-28T15:00:44.925Z</updated>
-    
-    <content type="html"><![CDATA[<p>严重性：Low</p><p>-漏洞类型：敏感信息泄露</p><p>安全要求：查看tomcat示例文件是否可正常访问</p><h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>Apache Tomcat默认安装包含“servlets-examples”和“tomcat-docs”目录，该目录包含许多示例servlet和JSP。其中一些示例存在安全风险，不应该部署在生产服务器上。</p><p>例：<a href="http://localhost:8080/examples/servlets/servlet/SessionExample示例允许用户进行会话操作。此会话是全局的，所以示例则会带来很大的安全风险，攻击者可能通过操纵其会话来有效的成为管理员。" target="_blank" rel="noopener">http://localhost:8080/examples/servlets/servlet/SessionExample示例允许用户进行会话操作。此会话是全局的，所以示例则会带来很大的安全风险，攻击者可能通过操纵其会话来有效的成为管理员。</a></p><p>受影响范围：所有版本的Tomcat</p><h3 id="0x01-测试流程"><a href="#0x01-测试流程" class="headerlink" title="0x01 测试流程"></a>0x01 测试流程</h3><p>创建测试文件<a href="http://localhost:8080/examples/session.jsp，主要是获得session的skey值，并打印出来，代码如下：" target="_blank" rel="noopener">http://localhost:8080/examples/session.jsp，主要是获得session的skey值，并打印出来，代码如下：</a></p><figure class="highlight"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">&lt;%@ page language=<span class="string">"java"</span> contentType=<span class="string">"text/html; charset=ISO-8859-1"</span> pageEncoding=<span class="string">"gbk"</span>%&gt;</span><br><span class="line">&lt;%@ page language=<span class="string">"java"</span> <span class="keyword">import</span>=<span class="string">"com.servlet.*"</span>%&gt;</span><br><span class="line"></span><br><span class="line">&lt;!DOCTYPE html PUBLIC <span class="string">"-//W3C//DTD HTML 4.01 Transitional//EN"</span> <span class="string">"http://www.w3.org/TR/html4/loose.dtd"</span>&gt;</span><br><span class="line">&lt;html&gt;</span><br><span class="line">&lt;head&gt;</span><br><span class="line">&lt;meta http-equiv=<span class="string">"Content-Type"</span> content=<span class="string">"text/html; charset=ISO-8859-1"</span>&gt;</span><br><span class="line">&lt;title&gt;Insert title here&lt;/title&gt;</span><br><span class="line">&lt;/head&gt;</span><br><span class="line">&lt;body&gt;</span><br><span class="line">&lt;%</span><br><span class="line">    String skey = (String)session.getAttribute(<span class="string">"skey"</span>);</span><br><span class="line">%&gt;</span><br><span class="line">&lt;h2&gt;</span><br><span class="line">Welcome to <span class="string">"&lt;%= skey%&gt;"</span> Login System!</span><br><span class="line">&lt;/h2&gt;</span><br><span class="line">This is the first javaWeb Project!</span><br><span class="line">&lt;/body&gt;</span><br><span class="line">&lt;/html&gt;</span><br></pre></td></tr></tbody></table></figure><p>页面访问结果如下：</p><p> <img src="https://img-blog.csdnimg.cn/20190221091721960.png" alt="在这里插入图片描述"> </p><p>访问<a href="http://localhost:8080/examples/servlets/servlet/SessionExample，填写session" target="_blank" rel="noopener">http://localhost:8080/examples/servlets/servlet/SessionExample，填写session</a> name=skey，session value = session test,提交结果如下：</p><p> <img src="https://img-blog.csdnimg.cn/20190221091752912.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2FsZXhfYmVhbg==,size_16,color_FFFFFF,t_70" alt="在这里插入图片描述"> </p><p>再次访问<a href="http://localhost:8080/examples/servlets/session.jsp页面，查看结果：" target="_blank" rel="noopener">http://localhost:8080/examples/servlets/session.jsp页面，查看结果：</a></p><p> <img src="https://img-blog.csdnimg.cn/20190221091814787.png" alt="img"> </p><p>注：同一个tomcat下，不同的项目之间的session不能共享。所以”Apache Tomcat”示例目录漏洞“对其他项目威胁不大，但任然建议部署环境中删除tomcat示例。</p><h3 id="0x02-修复方案"><a href="#0x02-修复方案" class="headerlink" title="0x02 修复方案"></a>0x02 修复方案</h3><p>通常情况下，无需使用样例功能，建议部署完Tomcat后直接删除<code>servlets-examples</code>和<code>tomcat-docs</code>目录。</p><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-    
-    <summary type="html">
-    
-      查看tomcat示例文件是否可正常访问
-    
-    </summary>
-    
-    
-      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
-    
-    
-      <category term="敏感信息泄露" scheme="https://comosk.github.io/tags/%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>漏洞名称：JS文件敏感信息泄露</title>
-    <link href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9AJS%E6%96%87%E4%BB%B6%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/"/>
-    <id>https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9AJS%E6%96%87%E4%BB%B6%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/</id>
-    <published>2020-02-28T14:56:11.000Z</published>
-    <updated>2020-02-28T14:58:27.552Z</updated>
-    
-    <content type="html"><![CDATA[<p>严重性：Medium</p><p>漏洞类型：敏感信息泄露</p><p>安全要求：前端js文件中，不应该存在敏感信息，如账户、密码、文件路径等。</p><h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>JS泄露敏感信息可以让攻击者轻松的收集用户手机号、姓名等隐私信息，也有可能利用进入网站后台或者是Getshell。</p><h3 id="0x01-漏洞成因"><a href="#0x01-漏洞成因" class="headerlink" title="0x01 漏洞成因"></a>0x01 漏洞成因</h3><p>javascrip相当于一种简答但功能强大的客户端脚本语言，属于解释性语言，执行的时候是一边解释一边运行。以上特性导致JavaScript源代码经常存在泄露的问题。一些粗心的开发者经常将各种敏感信息存储在JavaScript脚本中，因为JS是解释型语言，所以攻击者可以看到JS源文件，从而导致对Web服务和用户隐私造成不同的威胁。</p><h3 id="0x02-漏洞分类及利用"><a href="#0x02-漏洞分类及利用" class="headerlink" title="0x02 漏洞分类及利用"></a>0x02 漏洞分类及利用</h3><p>根据泄露的内容、利用方式以及待带来的危害不同，可以将JS文件敏感信息漏洞分为三类：</p><h4 id="JS文件泄露后台管理敏感路径以及API"><a href="#JS文件泄露后台管理敏感路径以及API" class="headerlink" title="JS文件泄露后台管理敏感路径以及API"></a>JS文件泄露后台管理敏感路径以及API</h4><p>此类问题主要存在与后台登录页面以及类似网页内引入的JS文件中。在对企业做渗透测试时，遇到后台利用SQL注入或者路径爆破都无法进入后台时，可以尝试寻找是否存在此类漏洞，说不定后台登录页面下引入的JS文件暴露的后台路径就会成为突破口。如果网站没有对是否登录状态做验证，攻击者就可以利用未授权访问暴露的API，实现纂改前段内容，甚至是getshell。</p><p><strong>测试步骤</strong>：</p><ol><li>进入待测试登录页面</li><li>F12查看网页源文件</li><li>去检测有无JS文件，同时看js文件中是否存在敏感信息</li><li>如果js文件中的URL泄露了后台功能实现的API，攻击者可以无需登录直接进行未授权操作。</li></ol><p><a href="https://wooyun.x10sec.org/static/bugs/wooyun-2012-013530.html" target="_blank" rel="noopener">【乌云实例：腾讯JS文件泄露URL】</a></p><h4 id="页面内JS泄露http-only保护的cookie"><a href="#页面内JS泄露http-only保护的cookie" class="headerlink" title="页面内JS泄露http-only保护的cookie"></a>页面内JS泄露http-only保护的cookie</h4><p>XSS常见利用手段是劫持用户Cookie并登录其账户，但是添加了http-only标记的cookie客户端脚本无法进行读取，因此cookie设置了http-only可以减少XSS带来的危害。</p><p>不过在当下存在开发者将受http-only保护的cookie写入到页面，导致攻击者可以利用crossdoamin.xml配置不当等漏洞，轻松跨域读取到受保护的cookie，从而登录用户账户。</p><p><a href="[https://github.com/iikira/BaiduPCS-Go/wiki/%E5%85%B3%E4%BA%8E-%E8%8E%B7%E5%8F%96%E7%99%BE%E5%BA%A6-BDUSS](https://github.com/iikira/BaiduPCS-Go/wiki/关于-获取百度-BDUSS)">【如何获取百度BDUSS】</a> 注：BDUSS含义：浏览器登录百度帐号成功以后, 百度服务器会在浏览器本地存储 Cookie 数据, 这样每次打开百度网站的时候, 就不需要重新登录百度帐号了.BDUSS 属于这些 Cookie 数据的一部分, 可以通过百度BDUSS,来实现模拟登录百度帐号。</p><p><a href="https://wooyun.x10sec.org/static/bugs/wooyun-2014-072951.html" target="_blank" rel="noopener">【乌云实例：百度泄露受http-only保护的cookie】</a></p><h4 id="页面内JS以及AJAX请求泄露用户敏感信息"><a href="#页面内JS以及AJAX请求泄露用户敏感信息" class="headerlink" title="页面内JS以及AJAX请求泄露用户敏感信息"></a>页面内JS以及AJAX请求泄露用户敏感信息</h4><p>此类漏洞常见于网站评论功能实现处。此漏洞获取用户敏感信息比通过jsonp漏洞更加便捷容易。存在开发者疏忽直接在页面的js以及AJAX请求中返回的内容中直接输出参与评论用户的敏感信息，导致攻击者可以轻松获取用户的手机号、真实姓名、注册邮箱、住址甚至用户手机的<a href="https://baike.baidu.com/item/IMEI" target="_blank" rel="noopener">IMEI</a> 。</p><p>此处可以利用爬虫获取大量的用户敏感信息。</p><p> （下图：泄露评论的用户邮箱、手机号）<img src="https://wooyun.x10sec.org/static/drops/full/9a973017d2be97d3bafc104f47bb8443d770e994.jpg" alt="enter image description here"> </p><p><a href="https://wooyun.x10sec.org/static/bugs/wooyun-2014-049775.html" target="_blank" rel="noopener">【乌云实例：百度XX获取用户手机号】</a></p><p><a href="https://wooyun.x10sec.org/static/bugs/wooyun-2014-049759.html" target="_blank" rel="noopener">【乌云实例：百度某音乐泄露用户手机号与邮箱】</a></p><h3 id="0x03-漏洞挖掘和检测"><a href="#0x03-漏洞挖掘和检测" class="headerlink" title="0x03 漏洞挖掘和检测"></a>0x03 漏洞挖掘和检测</h3><p>以上三种类型漏洞存在共同的检测方式，在源代码中搜索（Ctrl+F）常见泄露的关键词“phone”、”email”、“ip”等等。</p><p>第一种：查看页面引入的JS文件，其中查找类似 .html、.do、.action等关键词</p><p>第二、三种：利用Fiddler之类工具进行抓包查看服务器响应的内容</p><p>也可以自行编写Chrome插件自行添加检测规则</p><h3 id="0x04-漏洞修复与防范"><a href="#0x04-漏洞修复与防范" class="headerlink" title="0x04 漏洞修复与防范"></a>0x04 漏洞修复与防范</h3><ul><li>不把敏感信息直接存储在页面内的JS和ajax请求响应内容中</li><li>开发者应该提高安全意识，安全开发</li></ul><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-    
-    <summary type="html">
-    
-      前端js文件中，不应该存在敏感信息，如账户、密码、文件路径等。
-    
-    </summary>
-    
-    
-      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
-    
-    
-      <category term="敏感信息泄露" scheme="https://comosk.github.io/tags/%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>漏洞名称：账号可同时登录</title>
-    <link href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%B4%A6%E5%8F%B7%E5%8F%AF%E5%90%8C%E6%97%B6%E7%99%BB%E5%BD%95/"/>
-    <id>https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E8%B4%A6%E5%8F%B7%E5%8F%AF%E5%90%8C%E6%97%B6%E7%99%BB%E5%BD%95/</id>
-    <published>2020-02-28T14:30:49.000Z</published>
-    <updated>2020-02-28T14:35:06.364Z</updated>
-    
-    <content type="html"><![CDATA[<p>安全性：Medium</p><p>漏洞类型：会话管理</p><p>安全要求：应能对单个账号的重复登录（同一账号同时在不同的终端上登录）进行限制（原则上不超过2个），出现重复登录时，给出明确提示。</p><h3 id="0x00-简介"><a href="#0x00-简介" class="headerlink" title="0x00 简介"></a>0x00 简介</h3><p>需要解决的四个问题：</p><ul><li>实现在线用户列表</li><li>单个账号在多个终端上进行登录时，进行与用户提示并与退出前一次登录</li><li>关闭浏览器，session失效，该session对应当前登录用户将会从在线列表中移除</li><li>用户正常退出，session失效，该session对应当前登录用户将从在线列表中移除</li></ul><h3 id="0x01-实现思想"><a href="#0x01-实现思想" class="headerlink" title="0x01 实现思想"></a>0x01 实现思想</h3><p>用户登录时，会创建一个session，用于保存用户信息。将所有用户登录时的session值与ID存入ServletContext中，显示在线列表时，就会从ServletContext中取得用户登录的sesson值，从中取得用户信息。</p><ul><li>账号未登录，则第一次登录将用户信息置于用户在线容器列表</li><li>账号已登录，判断是否异地重复登录，重复登录就移除上一次登录，将其失效，把最新登录会话置于用户在线列表中</li></ul><ol><li>登录：先从ServletContext中取出存放用户登录得session相关信息，检查列表，如果已经存在相同得登录信息，则说明用户之前已经登录过，移除前面得记录，再次将此次登录信息加入到ServlertContext中。</li><li>监听：实现SessionListener类，当session失效的时候，从ServletContext中移除相应记录。</li><li>过滤：过滤所有页面，session失效后转向登录页面。但是要实现用户二次登录后强制先前的登录失效，登录时存入的是seesion值与ID值，session值是相同的，但是ID却不相同。</li></ol><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-    
-    <summary type="html">
-    
-      应能对单个账号的重复登录（同一账号同时在不同的终端上登录）进行限制（原则上不超过2个），出现重复登录时，给出明确提示。
-    
-    </summary>
-    
-    
-      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
-    
-    
-      <category term="会话管理" scheme="https://comosk.github.io/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>漏洞名称：未启用会话超时功能</title>
-    <link href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/"/>
-    <id>https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E6%9C%AA%E5%90%AF%E7%94%A8%E4%BC%9A%E8%AF%9D%E8%B6%85%E6%97%B6%E5%8A%9F%E8%83%BD/</id>
-    <published>2020-02-28T14:28:16.000Z</published>
-    <updated>2020-02-28T14:30:14.994Z</updated>
-    
-    <content type="html"><![CDATA[<p>安全性：中</p><p>漏洞类型：会话管理</p><p>安全要求：具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询，个人信息修改等页面，需重新对用户进行认证且会话超时时间不得大于15分钟，认证方式可选择密码、短信等。</p><h3 id="0x00-前言"><a href="#0x00-前言" class="headerlink" title="0x00 前言"></a>0x00 前言</h3><p>为了控制攻击者对活动会话的攻击及劫持时间为最小，必须为每个会话设置过期时间。如果Web应用程序的会话过期设置不足，将会增加基于会话的攻击风险，因为攻击者可以重用有效的会话ID并劫持关联的会话。</p><p>会话间隔越短，攻击者能使用有效会话ID的时间就越少。会话过期时间需要根据Web应用程序的目的与特性进行设置，并在安全性和可用性之间取得平衡，保证用户可以轻松的完成Web应用程序的操作，不会频繁因为会话过期而中断操作。空闲时间与过期时间与web应用程序的重要性密切相关，对于高风险应用，常用的闲置时间范围为2-5分钟，而低风险的应用程序则为15-30分钟。当会话到期时，web应用程序必须主动采取措施来使客户端与服务端的会话失效。</p><h3 id="0x01-会话过期方式"><a href="#0x01-会话过期方式" class="headerlink" title="0x01 会话过期方式"></a>0x01 会话过期方式</h3><h4 id="1-1-自动会话超时"><a href="#1-1-自动会话超时" class="headerlink" title="1.1 自动会话超时"></a>1.1 自动会话超时</h4><ul><li><p><strong>空闲超时</strong></p><p>在Web应用程序中，所有会话都应该实现空闲或者不活动超时，此超时定义了会话在没有活动的情况下所保持的时间，即给定的会话ID从接收到最后一个HTTP请求到它失效的这段空闲时间。空闲超时限制了攻击者猜测和使用来自用户的有效会话ID的可能性，但是，如果攻击者已经劫持了给定的会话，则空闲超时不会限制攻击者的行为，因为它可以定期进行会话活动，以使会话保持较长时间的活动状态。如果客户端用于执行会话超时，例如使用会话令牌或其他客户端参数作为时间参数，那么攻击者可以操纵这些参数以延长会话的持续时间，因此会话超时管理必须在服务端进行。</p></li><li><p><strong>绝对超时</strong></p><p>无论会话活动如何，所有绘画都会被实现绝对超时。此超时定义了会话可以处于活动状态的最长时间，从Web应用创建会话开始计时，定义绝对时间段内关闭会话。会话无效后，用户只能在web应用程序中再次进行认证并建立新的会话。绝对会话限制了攻击者可以使用别劫持会话及冒充受害者的时间。</p></li><li><p><strong>更新超时</strong></p><p>Web应用程序可以实现额外的更新超时，实现会话ID的自动更新，它在用户会话有效期期间内独立于会话活动，因此与空闲超时无关。在最初创建的特定时间段之后，web应用程序可以为用户会话重新生成一个新的会话ID，并尝试在客户端上对其进行设置及更新。在客户端知道新ID并开始使用之前，旧的会话ID仍然有效；客户端切换到新ID，应用程序将使先前的ID失效。</p><p>这种机制减少了给定会话ID的使用时间，特别是会话ID被攻击者劫持的时间。如果用户会话在合法的客户端上打开并保持活动，那么每当更新超时到期，会定期更新其关联的会话ID。因此，更新超时补充了空闲超时和绝对超时，特别是绝对超时随着会话时间进行扩展时。</p><p>但这种也存在竞争的情况：攻击者使用先前有效的会话ID在受害者之前发送请求，紧接着更新超时到期，这样攻击者就是先一步的到更新的会话ID值。但这种情况下，用户的会话ID会突然终止，关联的ID会突然失效，至少让用户意识到了自己遭受到了攻击。</p></li></ul><h4 id="1-2-手动会话超时"><a href="#1-2-手动会话超时" class="headerlink" title="1.2 手动会话超时"></a>1.2 手动会话超时</h4><p>​    web应用程序应该提供一种机制，让用户完成完web应用程序后主动关闭会话。 </p><p>​    注销按钮：Web应用程序必须提供一个可见的易于访问的注销按钮，一般时放置程序的头部或菜单上，        并且可以从每个资源或页面上访问，让用户可以在任何时候手动关闭会话。如上所述，Web应用程序必须在    服务端使会话无效。</p><p>​    注：并非每个程序都实现了便于关闭会话的机制，用户可以使用增强功能去注销会话。比如FireFox浏览器的附加组件PopU Logout。</p><h4 id="1-3-网页内容缓存"><a href="#1-3-网页内容缓存" class="headerlink" title="1.3 网页内容缓存"></a>1.3 网页内容缓存</h4><p>会话关闭后可以通过Web浏览器的缓存来访问会话内交换的隐私数据，所以Web应用程序必须对HTTP和HTTPS交换的所有Web流量使用限制缓存指令，如HTTP头或META标签使用Cache-Control:no-cache,no-store和Pragma:no-cache配置。</p><p>如果允许缓存，允许Web客户端缓存除会话ID外的所有内容。</p><h3 id="0x02-思考？"><a href="#0x02-思考？" class="headerlink" title="0x02 思考？"></a>0x02 思考？</h3><p><u>如何实现主动式会话过期提醒？？</u></p><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-    
-    <summary type="html">
-    
-      具有登录功能的互联网网站及APP应具有会话超时退出机制，系统涉及交易支付和查询
-    
-    </summary>
-    
-    
-      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
-    
-    
-      <category term="会话管理" scheme="https://comosk.github.io/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>漏洞名称：会话固定</title>
-    <link href="https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E5%9B%BA%E5%AE%9A/"/>
-    <id>https://comosk.github.io/2020/02/28/%E6%BC%8F%E6%B4%9E%E5%90%8D%E7%A7%B0%EF%BC%9A%E4%BC%9A%E8%AF%9D%E5%9B%BA%E5%AE%9A/</id>
-    <published>2020-02-28T14:25:05.000Z</published>
-    <updated>2020-02-28T14:27:53.070Z</updated>
-    
-    <content type="html"><![CDATA[<p>安全性：Medium</p><p>漏洞类型：会话管理</p><p>安全要求：用户注销会话后，不能通过使用浏览器的回退按钮来显示</p><h3 id="0x01-简介"><a href="#0x01-简介" class="headerlink" title="0x01 简介"></a>0x01 简介</h3><ul><li>无状态的HTTP与会话：由于HTTP是无状态的服务，容器为了在同一个用户的不同请求之间保持状态，为每个状态维持一个会话，Servlet容器一般就是HttpSession对象。HTTP客户端每次请求时，都需要把HTTPSession对象的ID(类似JSEESIONID)传递过来，JSEESIONID的传递机制通常是作为URL的一部分或者放置在Cookie中。在第一次请求时，由于没有JSEESIONID，容器会创建一个HTTPSession对象，把它的ID作为JSEESSIONID进行传递，容器中根据这个ID值找到HTTPSession对象。</li><li>登陆与注销前后，如果这个JSESSIONID不会改变，则表示存在会话固定的漏洞。登录前，用户第一次请容器，容器生成一个HttpSession对象，设置JSESSIONID,但这个JSESSIONID是未验证的，如果这个JSEESIONID被恶意用户获取到,那么用户登录后，这个JSEESSIONID变成有效的以后，恶意用户就可以用JSESSIONID来伪冒用户</li></ul><h3 id="0x02-修复建议"><a href="#0x02-修复建议" class="headerlink" title="0x02 修复建议"></a>0x02 修复建议</h3><p>登录成功后作废登录前的会话，注销成功后作废之前的合法会话。</p><p>注销后需要调用HttpSession.invalidate()方法来作废合法的HTTPSession对象，不然会导致内存泄露，因为未注销的httpSession对象只有在超时后才会被回收。</p><script>        document.querySelectorAll('.github-emoji')          .forEach(el => {            if (!el.dataset.src) { return; }            const img = document.createElement('img');            img.style = 'display:none !important;';            img.src = el.dataset.src;            img.addEventListener('error', () => {              img.remove();              el.style.color = 'inherit';              el.style.backgroundImage = 'none';              el.style.background = 'none';            });            img.addEventListener('load', () => {              img.remove();            });            document.body.appendChild(img);          });      </script>]]></content>
-    
-    <summary type="html">
-    
-      用户注销会话后，不能通过使用浏览器的回退按钮来显示
-    
-    </summary>
-    
-    
-      <category term="Web安全" scheme="https://comosk.github.io/categories/Web%E5%AE%89%E5%85%A8/"/>
-    
-    
-      <category term="会话管理" scheme="https://comosk.github.io/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/"/>
     
   </entry>
   
