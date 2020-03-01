@@ -4,7 +4,8 @@
     <title>DNS域名解析过程详解</title>
     <url>/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/</url>
     <content><![CDATA[<p>​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。</p>
-<p><img src="https://bkimg.cdn.bcebos.com/pic/4e4a20a4462309f72ac61ab6720e0cf3d6cad6ed?x-bce-process=image/watermark,g_7,image_d2F0ZXIvYmFpa2UxNTA=,xp_5,yp_5" alt="img">  </p>
+<img src="https://bkimg.cdn.bcebos.com/pic/4e4a20a4462309f72ac61ab6720e0cf3d6cad6ed?x-bce-process=image/watermark,g_7,image_d2F0ZXIvYmFpa2UxNTA=,xp_5,yp_5" class="nofancybox">  
+
 <h3 id="0x01-根域"><a href="#0x01-根域" class="headerlink" title="0x01 根域"></a>0x01 根域</h3><p>其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即<a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a>. 。但习惯省略了后面的点。</p>
 <p>域名是分级的，所以域名解析也是分级的，本地DNS服务器不存在我们查找的域名IP地址时，下一步就会直接向根域名DNS服务器进行发出解析请求。</p>
 <p>根域服务器只有13个IP地址，但机器不仅仅只有13个。IP地址是借助传播的技术的，所以我们可以在全球都可以访问到这些IP的镜像站点。</p>
