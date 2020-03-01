@@ -1006,7 +1006,7 @@ pre .javascript .function {
   border-bottom: none;
   color: var(--brand-color);
   display: inline-block;
-  line-height: 1.375em;
+  line-height: 1.175em;
   padding: 0 40px;
   position: relative;
 }
@@ -1016,7 +1016,7 @@ pre .javascript .function {
 .site-title {
   display: inline-block;
   font-family: 'Lato', "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 1.375em;
+  font-size: 1.175em;
   font-weight: normal;
   line-height: 1.5;
   vertical-align: top;
@@ -1196,7 +1196,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #134762;
+  background: #e5ff9d;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -1522,7 +1522,7 @@ pre .javascript .function {
 }
 @media (min-width: 1200px) {
   .post-body {
-    font-size: 1.125em;
+    font-size: 1.025em;
   }
 }
 .post-body span.exturl .fa {
@@ -1571,7 +1571,7 @@ pre .javascript .function {
   }
 }
 .posts-collapse .collection-title {
-  font-size: 1.125em;
+  font-size: 1.025em;
   position: relative;
 }
 .posts-collapse .collection-title::before {
@@ -1630,7 +1630,7 @@ pre .javascript .function {
   left: 0;
   margin-left: -4px;
   position: absolute;
-  top: 0.75em;
+  top: 0.65em;
   transition-property: background;
   width: 6px;
   transition-delay: 0s;
@@ -1645,7 +1645,7 @@ pre .javascript .function {
 }
 .posts-collapse .post-meta {
   display: inline;
-  font-size: 0.75em;
+  font-size: 0.65em;
   margin-right: 10px;
 }
 .posts-collapse .post-title {
@@ -1778,7 +1778,7 @@ pre .javascript .function {
   margin: 0;
 }
 .posts-expand .post-header {
-  font-size: 1.125em;
+  font-size: 1.025em;
 }
 .posts-expand .post-title {
   font-weight: normal;
@@ -1819,7 +1819,7 @@ pre .javascript .function {
 .posts-expand .post-meta {
   color: #999;
   font-family: 'Lato', "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 0.75em;
+  font-size: 0.65em;
   margin: 3px 0 60px 0;
   text-align: center;
 }
@@ -1872,7 +1872,7 @@ pre .javascript .function {
   top: 2px;
 }
 .post-nav-item .fa {
-  font-size: 0.75em;
+  font-size: 0.65em;
 }
 .post-nav-item:first-child {
   margin-right: 15px;
@@ -1973,6 +1973,13 @@ pre .javascript .function {
 }
 #qr p {
   text-align: center;
+}
+.post-copyright {
+  background: var(--card-bg-color);
+  border-left: 3px solid #ff2a2a;
+  list-style: none;
+  margin: 2em 0 0;
+  padding: 0.5em 1em;
 }
 .followme {
   align-items: center;
@@ -2162,7 +2169,7 @@ pre .javascript .function {
   }
 }
 ul.breadcrumb {
-  font-size: 0.75em;
+  font-size: 0.65em;
   list-style: none;
   margin: 1em 0;
   padding: 0 2em;

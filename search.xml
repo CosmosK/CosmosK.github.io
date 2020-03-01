@@ -3300,7 +3300,7 @@
   <entry>
     <title>APK应用构建过程</title>
     <url>/2020/02/28/APK%E5%BA%94%E7%94%A8%E6%9E%84%E5%BB%BA%E8%BF%87%E7%A8%8B/</url>
-    <content><![CDATA[<p><img src="../images/apkCreate.png" alt=""></p>
+    <content><![CDATA[<p><img src="/images/apkCreate.png" alt=""></p>
 <ol>
 <li><p>编译资源文件，如AndoridManifest.xml和用于构建UI布局的xml文件等。</p>
 <p>使用的aapt就是（android asset package tool,安卓资源文件打包工具），会生成一个R.java文件，该文件包含代码中可以引用的一些常量。</p>

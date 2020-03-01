@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>seceNotes</title>
+  <title>SecNotes</title>
   
   <subtitle>山河远阔 清风徐来</subtitle>
   <link href="/atom.xml" rel="self"/>
