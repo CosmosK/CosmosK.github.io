@@ -1,6 +1,314 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>DNS域名解析过程详解</title>
+    <url>/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/</url>
+    <content><![CDATA[<p>​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。</p>
+<p><img src="https://images2015.cnblogs.com/blog/464291/201707/464291-20170703113844956-354755333.jpg" alt="img"> </p>
+<h3 id="0x01-根域"><a href="#0x01-根域" class="headerlink" title="0x01 根域"></a>0x01 根域</h3><p>其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即<a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a>. 。但习惯省略了后面的点。</p>
+<p>域名是分级的，所以域名解析也是分级的，本地DNS服务器不存在我们查找的域名IP地址时，下一步就会直接向根域名DNS服务器进行发出解析请求。</p>
+<p>根域服务器只有13个IP地址，但机器不仅仅只有13个。IP地址是借助传播的技术的，所以我们可以在全球都可以访问到这些IP的镜像站点。</p>
+<p>kali liunx提供一个dig命令来查看相关信息：dig 指定站点</p>
+<h3 id="0x02-域的划分"><a href="#0x02-域的划分" class="headerlink" title="0x02 域的划分"></a>0x02 域的划分</h3><p>根域下来就是一级域也叫顶级域</p>
+<blockquote>
+<p>两种划分方式：按行业性质和按国家</p>
+<ul>
+<li>按行业：.com  .org ……</li>
+<li>按国家：.cn   .jp  .us</li>
+</ul>
+</blockquote>
+<p>每个域都有自己的域名服务器，也叫权威域名服务器</p>
+<p>一级域名之后还有二级域名、三级域名。而且只要买了一个顶级域名，搭建了自己BIND服务器注册测到互联网中，就可以随意的多加几个域了。</p>
+<h3 id="0x03-域名服务器"><a href="#0x03-域名服务器" class="headerlink" title="0x03 域名服务器"></a>0x03 域名服务器</h3><p>提供域名解析的服务器，上面的记录可以是A(address)记录，NS(nameserver)记录，MX(mail)，CNAME等。</p>
+<ul>
+<li><p>A记录</p>
+<p>又称IP指向。在此设置子域名并且指向自己的目标主机地址上，从而实现通过域名找到都武器。注：指向目标主机地址，只能使用IP地址</p>
+<blockquote>
+<ul>
+<li>泛域名解析：指将该域名所有未指定的子域名都指向一个地址。在主机名：*| 类型：A|IP地址/主机名：IP地址</li>
+<li>SLB（负载均衡Server load balancing）：指在一系列资源上动态分布网络负载。相同子域名有多个目标地址时，即是轮询，达到SLB，但需要虚拟主机服务商支持</li>
+</ul>
+</blockquote>
+</li>
+<li><p>CNAME</p>
+<p>通常称为别名指向。为自己的主机设置一个别名，例test.com，用来指向<a href="http://www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。" target="_blank" rel="noopener">www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。</a></p>
+<p>CNAME中目标地址只能使用主机名，不能使用IP地址，主机名前面不能有任何前缀如https://</p>
+<div class="note info">
+            <p>注：A记录优于CNAME记录。即两者同时存在，CNAME不生效。</p>
+          </div>
+</li>
+<li><p>MX记录</p>
+<p>邮件交换记录。用于以该域名为结尾的电子邮件指向对应的邮件服务器进行处理。例邮件是以域名testabcd.com结尾的，那么管理界面添加该域名的MX记录来处理所有@testabcd.com结尾的邮件。</p>
+<blockquote>
+<p>MX记录可以使用主机或IP地址。可以设置优先级实现主辅服务器设置，优先级中数字越小，优先级越高。相同的数字实现负载均衡。</p>
+<p>如果在“主机名”中填入子域名则此MX记录只对该子域名生效。</p>
+<p>当域名的MX记录有多个目标地址且优先级相同时，表示轮循，可以达到负载均衡的目的</p>
+</blockquote>
+</li>
+<li><p>NS记录</p>
+<blockquote>
+<p>解析服务器记录。用来表明由哪台服务器对该域名进行解析。 只对子域名生效。 </p>
+</blockquote>
+<div class="note info">
+            <p>注：NS记录高于A记录。</p>
+          </div>
+
+<p>注：TTL值TTL值全称是“生存时间（ Time To Live)” ，简单的说它表示DNS记录在 DNS服务器上缓存时间 </p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>基础知识</category>
+      </categories>
+      <tags>
+        <tag>DNS解析</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>绕过CDN查看真实IP方法</title>
+    <url>/2020/03/01/%E7%BB%95%E8%BF%87CDN%E6%9F%A5%E7%9C%8B%E7%9C%9F%E5%AE%9EIP%E6%96%B9%E6%B3%95/</url>
+    <content><![CDATA[<p>绕过CND查看网站真实IP的一些方法</p>
+<h5 id="0x01-验证是否存在CDN最简单的方法"><a href="#0x01-验证是否存在CDN最简单的方法" class="headerlink" title="0x01. 验证是否存在CDN最简单的方法"></a>0x01. 验证是否存在CDN最简单的方法</h5><blockquote>
+<p>通过在线的多地ping，即通过每个地区ping的结果的得到IP</p>
+<p>看这些IP是否一直，如果都是一样的，极大可能不存在CDN，但不绝对</p>
+<p>如果这些IP大多都不太一样，或者规律性很强，可以尝试查询这些IP的归属地，判断是否都存在CDN</p>
+</blockquote>
+<h5 id="0x02-验证IP和域名是否真实对应最简单的办法"><a href="#0x02-验证IP和域名是否真实对应最简单的办法" class="headerlink" title="0x02. 验证IP和域名是否真实对应最简单的办法"></a>0x02. 验证IP和域名是否真实对应最简单的办法</h5><blockquote>
+<p>修改本地hosts文件，强行将域名与IP解析对应</p>
+<p>然后访问域名页面是否发生变化</p>
+<ol>
+<li><p><code>ping</code></p>
+<p>假设存在CDN</p>
+<p>ping www.域名.com 是不通的</p>
+<p>尝试 ping 域名.com</p>
+<p>很多厂商可能让www使用CDN，空域名不使用CDN缓存</p>
+<p>即直接ping 域名，可能得到真实IP</p>
+</li>
+<li><p>分站域名</p>
+<p>很多网站主站的访问量比较大，所以主站都是挂CDN，但分站不一定使用CDN</p>
+<p>这个时候可以尝试去查看相应分站IP。推荐<code>Zoomeye.org</code>，<code>shodan.io</code>，<code>fofa</code>。都可以选择</p>
+</li>
+<li><p>国外访问</p>
+<p>国内的CDN往往只针对国内用户访问加速，所以国外就不一定。即使用国外代理访问就能查看真实的IP了</p>
+<p>利用国外的DNS解析，就有可能得到真实IP</p>
+</li>
+</ol>
+</blockquote>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>渗透测试</category>
+      </categories>
+      <tags>
+        <tag>信息收集</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>渗透测试之信息收集【2020.3.1记】</title>
+    <url>/2020/03/01/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B9%8B%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86%E3%80%902020-3-1%E8%AE%B0%E3%80%91/</url>
+    <content><![CDATA[<h3 id="1-Web信息收集"><a href="#1-Web信息收集" class="headerlink" title="1. Web信息收集"></a>1. Web信息收集</h3><h4 id="0x01-网站源码脚本"><a href="#0x01-网站源码脚本" class="headerlink" title="0x01 网站源码脚本"></a>0x01 网站源码脚本</h4><blockquote>
+<p>伪静态 :不是真正的静态格式文件 </p>
+<p>利用F12查看更多的信息，查看相应的开发语言，如果简单的一次看不出来，可以多发送几次数据包，然后进行目录扫描的时候，例如<code>御剑</code>，选择相应的字典类型。</p>
+<p>F12进入开发者模式，在network中多提交地址访问抓包分析，在requset和response来回的数据包中去发现更多的信息。</p>
+</blockquote>
+<h4 id="0x02-Web指纹识别"><a href="#0x02-Web指纹识别" class="headerlink" title="0x02. Web指纹识别"></a>0x02. Web指纹识别</h4><blockquote>
+<p>Web应用是利用cms进行搭建的，进行CMS进行相应的识别后，可以查看更多的信息</p>
+<p>平台：搜索引擎去搜索Web指纹识别</p>
+<p>工具：<code>cmsmap</code> <code>御剑cms</code></p>
+</blockquote>
+<h4 id="0x03-网站对应数据库"><a href="#0x03-网站对应数据库" class="headerlink" title="0x03. 网站对应数据库"></a>0x03. 网站对应数据库</h4><blockquote>
+<p>常用的数据库组合匹配，php:mysql aspx:mssql asp:access |jsp:mysql/oracle py:mongodb</p>
+<p>端口扫描判断<code>zenmap</code> <code>masscan</code>：内网服务器方法失效</p>
+<p>常见数据库端口：mysql:3306 mssql:1433 oracle:1521,详细见<a href="https://www.cnblogs.com/botoo/p/10475402.html" target="_blank" rel="noopener">端口渗透总结</a></p>
+</blockquote>
+<h4 id="0x04-网站搭建平台"><a href="#0x04-网站搭建平台" class="headerlink" title="0x04. 网站搭建平台"></a>0x04. 网站搭建平台</h4><blockquote>
+<p>查看元素或审查元素抓包获取</p>
+</blockquote>
+<h4 id="0x05-服务器操作系统"><a href="#0x05-服务器操作系统" class="headerlink" title="0x05. 服务器操作系统"></a>0x05. 服务器操作系统</h4><blockquote>
+<p>大小写判断Windows大小写不敏感，liunx相反</p>
+</blockquote>
+<h4 id="0x06-robots协议"><a href="#0x06-robots协议" class="headerlink" title="0x06. robots协议"></a>0x06. robots协议</h4><blockquote>
+<p>写给搜索引擎看的，搜索殷勤去爬行数据时，有选择的爬行。</p>
+<p>查看方法直地址/robots.txt获取</p>
+</blockquote>
+<h3 id="2-端口信息收集"><a href="#2-端口信息收集" class="headerlink" title="2. 端口信息收集"></a>2. 端口信息收集</h3><h4 id="0x01-服务协议对应"><a href="#0x01-服务协议对应" class="headerlink" title="0x01. 服务协议对应"></a>0x01. 服务协议对应</h4><blockquote>
+<p><a href="https://www.cnblogs.com/botoo/p/10475402.html" target="_blank" rel="noopener">端口渗透总结</a></p>
+</blockquote>
+<h4 id="0x02-Web端口对应"><a href="#0x02-Web端口对应" class="headerlink" title="0x02. Web端口对应"></a>0x02. Web端口对应</h4><blockquote>
+<p>搜索引擎去查看打开8080端口的，inurl:8080，如果不加8080和加8080是不同的目标，这就是两个目标</p>
+</blockquote>
+<h3 id="3-目录信息收集"><a href="#3-目录信息收集" class="headerlink" title="3. 目录信息收集"></a>3. 目录信息收集</h3><h4 id="0x01-敏感文件"><a href="#0x01-敏感文件" class="headerlink" title="0x01. 敏感文件"></a>0x01. 敏感文件</h4><blockquote>
+<p>工具：<code>WebPathBrute[御剑实战靶场]</code></p>
+<p>备份文件、数据库备份文件、源码备份文件等</p>
+<p>说明文件、源码说明、其他说明等</p>
+</blockquote>
+<h4 id="0x02-目录站点"><a href="#0x02-目录站点" class="headerlink" title="0x02. 目录站点"></a>0x02. 目录站点</h4><blockquote>
+<p>不同的搭建不同的地址</p>
+</blockquote>
+<h4 id="0x03-爬行目录"><a href="#0x03-爬行目录" class="headerlink" title="0x03. 爬行目录"></a>0x03. 爬行目录</h4><blockquote>
+<p>扫描工具对其进行扫描，其中可能包括后台地址</p>
+<p>工具：layer子域名挖掘机。或kali命令：dirb</p>
+</blockquote>
+<h4 id="0x04-扫描目录"><a href="#0x04-扫描目录" class="headerlink" title="0x04. 扫描目录"></a>0x04. 扫描目录</h4><blockquote>
+<p>通过字典扫描可能存在的页面，主要扫描后台和上传目录</p>
+</blockquote>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>渗透测试</category>
+      </categories>
+      <tags>
+        <tag>信息收集</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Web安全渗透测试常见下手方式</title>
+    <url>/2020/03/01/Web%E5%AE%89%E5%85%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E4%B8%8B%E6%89%8B%E6%96%B9%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="0x01-基于Web的安全漏洞的渗透✒️"><a href="#0x01-基于Web的安全漏洞的渗透✒️" class="headerlink" title="0x01 基于Web的安全漏洞的渗透✒️"></a>0x01 基于Web的安全漏洞的渗透✒️</h3><blockquote>
+<ol>
+<li>主要是针对Web应用进行安全测试，从Web下手</li>
+<li>检测有没有SQL注入，XSS等漏洞，然后针对漏洞进行攻击</li>
+</ol>
+</blockquote>
+<h3 id="0x02-基于Web的CMS漏洞的渗透👶"><a href="#0x02-基于Web的CMS漏洞的渗透👶" class="headerlink" title="0x02 基于Web的CMS漏洞的渗透👶"></a>0x02 基于Web的CMS漏洞的渗透👶</h3><blockquote>
+<ol>
+<li>通过对CMS系统的一个指纹识别，去查看使用的第三方软件和服务器，开发语言之类的信息</li>
+<li>主要有两种方式，方式一:平台，通过搜索引擎<code>搜索Web指纹识别</code></li>
+<li>另一种方式：利用工具<code>cmsmap</code> <code>御剑CMS</code></li>
+</ol>
+</blockquote>
+<h3 id="0x03-基于Web和端口结合的渗透💙"><a href="#0x03-基于Web和端口结合的渗透💙" class="headerlink" title="0x03 基于Web和端口结合的渗透💙"></a>0x03 基于Web和端口结合的渗透💙</h3><blockquote>
+<ol>
+<li>对域名地址无从下手，选择利用端口进行入手</li>
+<li>采用工具<code>zenmap</code>或<code>nmap</code>进行全部端口的扫描探针</li>
+<li>扫描端口结果后在域名后面进行：域名/IP+端口号</li>
+<li>查看有几个站点，如果不是站点，可以进行目录扫描</li>
+</ol>
+</blockquote>
+<blockquote>
+<p>意义：在于端口这个地方也是一个机会。</p>
+</blockquote>
+<h3 id="0x04-基于Web目录结构上的渗透🗂"><a href="#0x04-基于Web目录结构上的渗透🗂" class="headerlink" title="0x04 基于Web目录结构上的渗透🗂"></a>0x04 基于Web目录结构上的渗透🗂</h3><blockquote>
+<ol>
+<li>管理员之类的忽视的一个问题，设置不当</li>
+<li>网站其他目录可能也是一个程序应用</li>
+<li>利用爬虫进行爬行进行目录扫描，相应工具<code>御剑</code> <code>dirb</code></li>
+</ol>
+</blockquote>
+<h3 id="0x05-基于Web域名结构上的渗透⛹️‍♀️"><a href="#0x05-基于Web域名结构上的渗透⛹️‍♀️" class="headerlink" title="0x05 基于Web域名结构上的渗透⛹️‍♀️"></a>0x05 基于Web域名结构上的渗透⛹️‍♀️</h3><blockquote>
+<ol>
+<li>如果域名上无从下手的话，可以从子域名上进行入手</li>
+<li>可以寻找相应的子域名和二级域名，利用工具<code>layer子域名挖掘机</code></li>
+<li><code>layer子域名挖掘机</code>原理是通过字典-&gt;枚举接口-&gt;进行前缀名的拼接。</li>
+<li>查看是否是同一IP最好，如果不是同一IP可以查看是否是同一网段，从内网下手</li>
+<li>利用搜索引擎进行查看子域名，<code>site:baidu.com</code>，<code>inurl:baidu.com</code>接下来利用脚本去爬行域名结果</li>
+<li>工具有的利用字典，有的利用爆破</li>
+</ol>
+</blockquote>
+<h3 id="0x06-基于中间件平台漏洞的渗透👤"><a href="#0x06-基于中间件平台漏洞的渗透👤" class="headerlink" title="0x06 基于中间件平台漏洞的渗透👤"></a>0x06 基于中间件平台漏洞的渗透👤</h3><blockquote>
+<ol>
+<li>类似于<code>IIS</code> <code>tomcat</code> <code>apache</code> <code>Nginx</code>等中间件常见漏洞，细看常见Web中间件常见漏洞总结</li>
+<li>发现这些漏洞，一些扫描工具进行一些探针，或者是发现这些服务器，信息收集的时候去搜索相应的漏洞。</li>
+<li><code>IIS</code>利用工具<code>Netsparker</code>去扫描</li>
+</ol>
+</blockquote>
+<h3 id="0x07-基于第三方软件漏洞的渗透🤙"><a href="#0x07-基于第三方软件漏洞的渗透🤙" class="headerlink" title="0x07 基于第三方软件漏洞的渗透🤙"></a>0x07 基于第三方软件漏洞的渗透🤙</h3><blockquote>
+<ol>
+<li>查看相应IP地址，利用ping:域名，得到IP地址</li>
+<li>利用端口扫描，利用协议去查看哪些服务，第三方软件，服务一搬利用端口</li>
+<li>利用端口进行访问，查看服务器软件，搜索相应的漏洞，查看攻击方式</li>
+</ol>
+</blockquote>
+<blockquote>
+<p>利用端口扫描然后查找第三方软件，然后搜索第三方软件的漏洞，然后进行尝试攻吉</p>
+</blockquote>
+<h3 id="0x08-基于服务器系统漏洞的渗透🗡"><a href="#0x08-基于服务器系统漏洞的渗透🗡" class="headerlink" title="0x08 基于服务器系统漏洞的渗透🗡"></a>0x08 基于服务器系统漏洞的渗透🗡</h3><blockquote>
+<ol>
+<li>针对系统的漏洞利用相对专业的系统扫描工具，例<code>openvs</code> <code>nessus</code></li>
+<li>注：经常进行更新nessus，使用相应的插件plugins</li>
+<li>然后选择常用的advanced Scan进行扫描，Target可以使用IP地址</li>
+<li>查看扫描结果查看漏洞介绍，进行相应的漏洞利用</li>
+</ol>
+</blockquote>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>]]></content>
+      <categories>
+        <category>渗透测试</category>
+      </categories>
+      <tags>
+        <tag>Web安全</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>XSS攻击方式及防御措施</title>
     <url>/2020/02/29/XSS%E6%94%BB%E5%87%BB%E6%96%B9%E5%BC%8F%E5%8F%8A%E9%98%B2%E5%BE%A1%E6%8E%AA%E6%96%BD/</url>
     <content><![CDATA[<h3 id="0x01-前端XSS攻击分类"><a href="#0x01-前端XSS攻击分类" class="headerlink" title="0x01 前端XSS攻击分类"></a>0x01 前端XSS攻击分类</h3><ul>

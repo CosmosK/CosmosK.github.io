@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。   0x01 根域其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即www.baidu.com. 。但习惯省略了后面的点。 域名是分级的，所以域名解析">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DNS域名解析过程详解">
+<meta property="og:url" content="https://comosk.github.io/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/index.html">
+<meta property="og:site_name" content="SecNotes">
+<meta property="og:description" content="​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。   0x01 根域其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即www.baidu.com. 。但习惯省略了后面的点。 域名是分级的，所以域名解析">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://images2015.cnblogs.com/blog/464291/201707/464291-20170703113844956-354755333.jpg">
+<meta property="article:published_time" content="2020-03-01T14:43:49.000Z">
+<meta property="article:modified_time" content="2020-03-01T14:45:18.966Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="DNS解析">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://images2015.cnblogs.com/blog/464291/201707/464291-20170703113844956-354755333.jpg">
+
+<link rel="canonical" href="https://comosk.github.io/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>DNS域名解析过程详解 | SecNotes</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="SecNotes" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SecNotes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">山河远阔 清风徐来</h1>
+      
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">17</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">5</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">52</span></a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          DNS域名解析过程详解
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-01 22:43:49 / 修改时间：22:45:18" itemprop="dateCreated datePublished" datetime="2020-03-01T22:43:49+08:00">2020-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">基础知识</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>1.3k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。</p>
+<p><img src="https://images2015.cnblogs.com/blog/464291/201707/464291-20170703113844956-354755333.jpg" alt="img"> </p>
+<h3 id="0x01-根域"><a href="#0x01-根域" class="headerlink" title="0x01 根域"></a>0x01 根域</h3><p>其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即<a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a>. 。但习惯省略了后面的点。</p>
+<p>域名是分级的，所以域名解析也是分级的，本地DNS服务器不存在我们查找的域名IP地址时，下一步就会直接向根域名DNS服务器进行发出解析请求。</p>
+<p>根域服务器只有13个IP地址，但机器不仅仅只有13个。IP地址是借助传播的技术的，所以我们可以在全球都可以访问到这些IP的镜像站点。</p>
+<p>kali liunx提供一个dig命令来查看相关信息：dig 指定站点</p>
+<h3 id="0x02-域的划分"><a href="#0x02-域的划分" class="headerlink" title="0x02 域的划分"></a>0x02 域的划分</h3><p>根域下来就是一级域也叫顶级域</p>
+<blockquote>
+<p>两种划分方式：按行业性质和按国家</p>
+<ul>
+<li>按行业：.com  .org ……</li>
+<li>按国家：.cn   .jp  .us</li>
+</ul>
+</blockquote>
+<p>每个域都有自己的域名服务器，也叫权威域名服务器</p>
+<p>一级域名之后还有二级域名、三级域名。而且只要买了一个顶级域名，搭建了自己BIND服务器注册测到互联网中，就可以随意的多加几个域了。</p>
+<h3 id="0x03-域名服务器"><a href="#0x03-域名服务器" class="headerlink" title="0x03 域名服务器"></a>0x03 域名服务器</h3><p>提供域名解析的服务器，上面的记录可以是A(address)记录，NS(nameserver)记录，MX(mail)，CNAME等。</p>
+<ul>
+<li><p>A记录</p>
+<p>又称IP指向。在此设置子域名并且指向自己的目标主机地址上，从而实现通过域名找到都武器。注：指向目标主机地址，只能使用IP地址</p>
+<blockquote>
+<ul>
+<li>泛域名解析：指将该域名所有未指定的子域名都指向一个地址。在主机名：*| 类型：A|IP地址/主机名：IP地址</li>
+<li>SLB（负载均衡Server load balancing）：指在一系列资源上动态分布网络负载。相同子域名有多个目标地址时，即是轮询，达到SLB，但需要虚拟主机服务商支持</li>
+</ul>
+</blockquote>
+</li>
+<li><p>CNAME</p>
+<p>通常称为别名指向。为自己的主机设置一个别名，例test.com，用来指向<a href="http://www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。" target="_blank" rel="noopener">www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。</a></p>
+<p>CNAME中目标地址只能使用主机名，不能使用IP地址，主机名前面不能有任何前缀如https://</p>
+<div class="note info">
+            <p>注：A记录优于CNAME记录。即两者同时存在，CNAME不生效。</p>
+          </div>
+</li>
+<li><p>MX记录</p>
+<p>邮件交换记录。用于以该域名为结尾的电子邮件指向对应的邮件服务器进行处理。例邮件是以域名testabcd.com结尾的，那么管理界面添加该域名的MX记录来处理所有@testabcd.com结尾的邮件。</p>
+<blockquote>
+<p>MX记录可以使用主机或IP地址。可以设置优先级实现主辅服务器设置，优先级中数字越小，优先级越高。相同的数字实现负载均衡。</p>
+<p>如果在“主机名”中填入子域名则此MX记录只对该子域名生效。</p>
+<p>当域名的MX记录有多个目标地址且优先级相同时，表示轮循，可以达到负载均衡的目的</p>
+</blockquote>
+</li>
+<li><p>NS记录</p>
+<blockquote>
+<p>解析服务器记录。用来表明由哪台服务器对该域名进行解析。 只对子域名生效。 </p>
+</blockquote>
+<div class="note info">
+            <p>注：NS记录高于A记录。</p>
+          </div>
+
+<p>注：TTL值TTL值全称是“生存时间（ Time To Live)” ，简单的说它表示DNS记录在 DNS服务器上缓存时间 </p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End<i class="fa fa-paw"></i>-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>л
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://comosk.github.io/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/" title="DNS域名解析过程详解">https://comosk.github.io/2020/03/01/DNS域名解析过程详解/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/DNS%E8%A7%A3%E6%9E%90/" rel="tag"># DNS解析</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/01/%E7%BB%95%E8%BF%87CDN%E6%9F%A5%E7%9C%8B%E7%9C%9F%E5%AE%9EIP%E6%96%B9%E6%B3%95/" rel="prev" title="绕过CDN查看真实IP方法">
+      <i class="fa fa-chevron-left"></i> 绕过CDN查看真实IP方法
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=1&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#0x01-根域"><span class="nav-text">0x01 根域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x02-域的划分"><span class="nav-text">0x02 域的划分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#0x03-域名服务器"><span class="nav-text">0x03 域名服务器</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">17</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title">
+      <i class="fa fa-fw fa-link"></i>
+      Links
+    </div>
+    <ul class="links-of-blogroll-list">
+        <li class="links-of-blogroll-item">
+          <a href="https://www.secshi.com/" title="https:&#x2F;&#x2F;www.secshi.com" rel="noopener" target="_blank">安全师</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.anquanke.com/" title="https:&#x2F;&#x2F;www.anquanke.com&#x2F;" rel="noopener" target="_blank">安全客</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.sec-wiki.com/" title="https:&#x2F;&#x2F;www.sec-wiki.com" rel="noopener" target="_blank">SecWiki</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://www.t00ls.net/" title="https:&#x2F;&#x2F;www.t00ls.net&#x2F;" rel="noopener" target="_blank">t00ls</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://nosec.org/home/index" title="https:&#x2F;&#x2F;nosec.org&#x2F;home&#x2F;index" rel="noopener" target="_blank">NOSEC</a>
+        </li>
+        <li class="links-of-blogroll-item">
+          <a href="https://bbs.pediy.com/" title="https:&#x2F;&#x2F;bbs.pediy.com&#x2F;" rel="noopener" target="_blank">看雪</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">67k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:01</span>
+</div>
+  <div class="theme-info">themes – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("02/27/2020 21:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

@@ -126,17 +126,17 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">14</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>标签<span class="badge">17</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
 
-    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">3</span></a>
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">5</span></a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">48</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">52</span></a>
 
   </li>
       <li class="menu-item menu-item-search">
@@ -186,6 +186,437 @@
             
 
   <div class="posts-expand">
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/03/01/DNS%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">DNS域名解析过程详解</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-01 22:43:49 / 修改时间：22:45:18" itemprop="dateCreated datePublished" datetime="2020-03-01T22:43:49+08:00">2020-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" itemprop="url" rel="index"><span itemprop="name">基础知识</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>1.3k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>​    信息收集对于渗透测试来说是重要的第一步，所以当然离不开whois,whois是用来查看域名的IP以及所有者的信息的传输协议。可以查看注册的域名所有人等。上面可以进行爆破邮箱、社工、域名劫持等方法攻击，下面详细讲解DNS解析过程。</p>
+<p><img src="https://images2015.cnblogs.com/blog/464291/201707/464291-20170703113844956-354755333.jpg" alt="img"> </p>
+<h3 id="0x01-根域"><a href="#0x01-根域" class="headerlink" title="0x01 根域"></a>0x01 根域</h3><p>其实就是所谓的“.”，所有网站的完整形式都有最后的一个点。即<a href="http://www.baidu.com" target="_blank" rel="noopener">www.baidu.com</a>. 。但习惯省略了后面的点。</p>
+<p>域名是分级的，所以域名解析也是分级的，本地DNS服务器不存在我们查找的域名IP地址时，下一步就会直接向根域名DNS服务器进行发出解析请求。</p>
+<p>根域服务器只有13个IP地址，但机器不仅仅只有13个。IP地址是借助传播的技术的，所以我们可以在全球都可以访问到这些IP的镜像站点。</p>
+<p>kali liunx提供一个dig命令来查看相关信息：dig 指定站点</p>
+<h3 id="0x02-域的划分"><a href="#0x02-域的划分" class="headerlink" title="0x02 域的划分"></a>0x02 域的划分</h3><p>根域下来就是一级域也叫顶级域</p>
+<blockquote>
+<p>两种划分方式：按行业性质和按国家</p>
+<ul>
+<li>按行业：.com  .org ……</li>
+<li>按国家：.cn   .jp  .us</li>
+</ul>
+</blockquote>
+<p>每个域都有自己的域名服务器，也叫权威域名服务器</p>
+<p>一级域名之后还有二级域名、三级域名。而且只要买了一个顶级域名，搭建了自己BIND服务器注册测到互联网中，就可以随意的多加几个域了。</p>
+<h3 id="0x03-域名服务器"><a href="#0x03-域名服务器" class="headerlink" title="0x03 域名服务器"></a>0x03 域名服务器</h3><p>提供域名解析的服务器，上面的记录可以是A(address)记录，NS(nameserver)记录，MX(mail)，CNAME等。</p>
+<ul>
+<li><p>A记录</p>
+<p>又称IP指向。在此设置子域名并且指向自己的目标主机地址上，从而实现通过域名找到都武器。注：指向目标主机地址，只能使用IP地址</p>
+<blockquote>
+<ul>
+<li>泛域名解析：指将该域名所有未指定的子域名都指向一个地址。在主机名：*| 类型：A|IP地址/主机名：IP地址</li>
+<li>SLB（负载均衡Server load balancing）：指在一系列资源上动态分布网络负载。相同子域名有多个目标地址时，即是轮询，达到SLB，但需要虚拟主机服务商支持</li>
+</ul>
+</blockquote>
+</li>
+<li><p>CNAME</p>
+<p>通常称为别名指向。为自己的主机设置一个别名，例test.com，用来指向<a href="http://www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。" target="_blank" rel="noopener">www.abcd.com，以后就可以用test.com来代替访问www.abcd.com了。</a></p>
+<p>CNAME中目标地址只能使用主机名，不能使用IP地址，主机名前面不能有任何前缀如https://</p>
+<div class="note info">
+            <p>注：A记录优于CNAME记录。即两者同时存在，CNAME不生效。</p>
+          </div>
+</li>
+<li><p>MX记录</p>
+<p>邮件交换记录。用于以该域名为结尾的电子邮件指向对应的邮件服务器进行处理。例邮件是以域名testabcd.com结尾的，那么管理界面添加该域名的MX记录来处理所有@testabcd.com结尾的邮件。</p>
+<blockquote>
+<p>MX记录可以使用主机或IP地址。可以设置优先级实现主辅服务器设置，优先级中数字越小，优先级越高。相同的数字实现负载均衡。</p>
+<p>如果在“主机名”中填入子域名则此MX记录只对该子域名生效。</p>
+<p>当域名的MX记录有多个目标地址且优先级相同时，表示轮循，可以达到负载均衡的目的</p>
+</blockquote>
+</li>
+<li><p>NS记录</p>
+<blockquote>
+<p>解析服务器记录。用来表明由哪台服务器对该域名进行解析。 只对子域名生效。 </p>
+</blockquote>
+<div class="note info">
+            <p>注：NS记录高于A记录。</p>
+          </div>
+
+<p>注：TTL值TTL值全称是“生存时间（ Time To Live)” ，简单的说它表示DNS记录在 DNS服务器上缓存时间 </p>
+</li>
+</ul>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+      
+    </div>
+
+    
+    
+    
+  <div>
+    
+    </div>
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/01/%E7%BB%95%E8%BF%87CDN%E6%9F%A5%E7%9C%8B%E7%9C%9F%E5%AE%9EIP%E6%96%B9%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/03/01/%E7%BB%95%E8%BF%87CDN%E6%9F%A5%E7%9C%8B%E7%9C%9F%E5%AE%9EIP%E6%96%B9%E6%B3%95/" class="post-title-link" itemprop="url">绕过CDN查看真实IP方法</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-01 21:45:54 / 修改时间：21:51:01" itemprop="dateCreated datePublished" datetime="2020-03-01T21:45:54+08:00">2020-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">渗透测试</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>462</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>有些网站的IP进行使用了CDN（内容分发网络），导致IP随着不同地方的访问，所得到的IP地址是不同的，这个时候我你们怎么绕过CDN查看真实IP地址</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/03/01/%E7%BB%95%E8%BF%87CDN%E6%9F%A5%E7%9C%8B%E7%9C%9F%E5%AE%9EIP%E6%96%B9%E6%B3%95/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+  <div>
+    
+    </div>
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/01/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B9%8B%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86%E3%80%902020-3-1%E8%AE%B0%E3%80%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/03/01/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B9%8B%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86%E3%80%902020-3-1%E8%AE%B0%E3%80%91/" class="post-title-link" itemprop="url">渗透测试之信息收集【2020.3.1记】</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-01 21:42:57 / 修改时间：21:45:07" itemprop="dateCreated datePublished" datetime="2020-03-01T21:42:57+08:00">2020-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">渗透测试</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>812</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>渗透测试开始时要更多更全面的进行信息的收集，包括Web信息收集，端口信息收集，目录信息收集……</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/03/01/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E4%B9%8B%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86%E3%80%902020-3-1%E8%AE%B0%E3%80%91/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+  <div>
+    
+    </div>
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/01/Web%E5%AE%89%E5%85%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E4%B8%8B%E6%89%8B%E6%96%B9%E5%BC%8F/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/03/01/Web%E5%AE%89%E5%85%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E4%B8%8B%E6%89%8B%E6%96%B9%E5%BC%8F/" class="post-title-link" itemprop="url">Web安全渗透测试常见下手方式</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-01 21:31:26 / 修改时间：21:34:54" itemprop="dateCreated datePublished" datetime="2020-03-01T21:31:26+08:00">2020-03-01</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">渗透测试</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>1k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>针对Web安全渗透测试常见的下手方式，在Web应用无从下手的时候，也可以选择Web的CMS漏洞，端口方面，域名结构，目录等方面进行下手。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/03/01/Web%E5%AE%89%E5%85%A8%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E5%B8%B8%E8%A7%81%E4%B8%8B%E6%89%8B%E6%96%B9%E5%BC%8F/">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+  <div>
+    
+    </div>
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
         
   
   
@@ -278,379 +709,11 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/header.jpg">
-      <meta itemprop="name" content="л">
-      <meta itemprop="description" content="Find the bug of the world">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SecNotes">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/" class="post-title-link" itemprop="url">避免重复提交表单</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Post created：2020-02-29 11:55:35 / 修改时间：11:57:34" itemprop="dateCreated datePublished" datetime="2020-02-29T11:55:35+08:00">2020-02-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
-                </span>
-            </span>
-
-          
-            <span class="post-meta-item" title="Words">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">Words：</span>
-              <span>136</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>避免重复提交表单方法。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/02/29/%E9%81%BF%E5%85%8D%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4%E8%A1%A8%E5%8D%95/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-  <div>
-    
-    </div>
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/header.jpg">
-      <meta itemprop="name" content="л">
-      <meta itemprop="description" content="Find the bug of the world">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SecNotes">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/" class="post-title-link" itemprop="url">CORS（跨域资源共享）</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Post created：2020-02-29 11:36:39 / 修改时间：11:43:55" itemprop="dateCreated datePublished" datetime="2020-02-29T11:36:39+08:00">2020-02-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
-                </span>
-            </span>
-
-          
-            <span class="post-meta-item" title="Words">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">Words：</span>
-              <span>835</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>通过代理实现跨域过程</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/02/29/CORS%EF%BC%88%E8%B7%A8%E5%9F%9F%E8%B5%84%E6%BA%90%E5%85%B1%E4%BA%AB%EF%BC%89/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-  <div>
-    
-    </div>
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/header.jpg">
-      <meta itemprop="name" content="л">
-      <meta itemprop="description" content="Find the bug of the world">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SecNotes">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/" class="post-title-link" itemprop="url">同源策略-跨域请求</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Post created：2020-02-29 11:27:08 / 修改时间：11:30:29" itemprop="dateCreated datePublished" datetime="2020-02-29T11:27:08+08:00">2020-02-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
-                </span>
-            </span>
-
-          
-            <span class="post-meta-item" title="Words">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">Words：</span>
-              <span>509</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>当发起请求的域和请求资源的域不是同一个的时，就是跨域请求。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/02/29/%E5%90%8C%E6%BA%90%E7%AD%96%E7%95%A5-%E8%B7%A8%E5%9F%9F%E8%AF%B7%E6%B1%82/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-  <div>
-    
-    </div>
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/header.jpg">
-      <meta itemprop="name" content="л">
-      <meta itemprop="description" content="Find the bug of the world">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SecNotes">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/" class="post-title-link" itemprop="url">会话跟踪</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-              
-
-              <time title="Post created：2020-02-29 11:24:24 / 修改时间：11:26:20" itemprop="dateCreated datePublished" datetime="2020-02-29T11:24:24+08:00">2020-02-29</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Web%E5%AE%89%E5%85%A8/" itemprop="url" rel="index"><span itemprop="name">Web安全</span></a>
-                </span>
-            </span>
-
-          
-            <span class="post-meta-item" title="Words">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-file-word-o"></i>
-              </span>
-                <span class="post-meta-item-text">Words：</span>
-              <span>154</span>
-            </span>
-            <span class="post-meta-item" title="Reading time">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-clock-o"></i>
-              </span>
-                <span class="post-meta-item-text">Reading time &asymp;</span>
-              <span>1 分钟</span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>sessionid相对于cookie安全，因为只在客户端存储了sessionId。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/02/29/%E4%BC%9A%E8%AF%9D%E8%B7%9F%E8%B8%AA/">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-  <div>
-    
-    </div>
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/10/">10</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/11/">11</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -718,20 +781,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">48</span>
+          <span class="site-state-item-count">52</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">分类</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">14</span>
+        <span class="site-state-item-count">17</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -802,12 +865,12 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-area-chart"></i>
     </span>
-    <span title="站点总字数">64k</span>
+    <span title="站点总字数">67k</span>
     <span class="post-meta-divider">|</span>
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">58 分钟</span>
+    <span title="站点阅读时长">1:01</span>
 </div>
   <div class="theme-info">themes – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
   </div>
