@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"comosk.github.io","root":"/","scheme":"Pisces","version":"7.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"flat"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="针对于某一个固定目标站点，如何进行相应的渗透测试，会从哪些方面入手……">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对后台登录页面如何进行渗透测试">
+<meta property="og:url" content="https://comosk.github.io/2020/03/08/%E5%AF%B9%E5%90%8E%E5%8F%B0%E7%99%BB%E5%BD%95%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/index.html">
+<meta property="og:site_name" content="SecNotes">
+<meta property="og:description" content="针对于某一个固定目标站点，如何进行相应的渗透测试，会从哪些方面入手……">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-03-08T10:03:13.000Z">
+<meta property="article:modified_time" content="2020-03-08T10:05:49.382Z">
+<meta property="article:author" content="л">
+<meta property="article:tag" content="渗透测试">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://comosk.github.io/2020/03/08/%E5%AF%B9%E5%90%8E%E5%8F%B0%E7%99%BB%E5%BD%95%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>对后台登录页面如何进行渗透测试 | SecNotes</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="SecNotes" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">SecNotes</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+        <h1 class="site-subtitle" itemprop="description">山河远阔 清风徐来</h1>
+      
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>分类<span class="badge">6</span></a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档<span class="badge">58</span></a>
+
+  </li>
+        <li class="menu-item menu-item-links">
+
+    <a href="/links/" rel="section"><i class="fa fa-fw fa-link"></i>友链</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+
+</nav>
+  <div class="site-search">
+    <div class="popup search-popup">
+    <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocorrect="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result"></div>
+
+</div>
+<div class="search-pop-overlay"></div>
+
+  </div>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://comosk.github.io/2020/03/08/%E5%AF%B9%E5%90%8E%E5%8F%B0%E7%99%BB%E5%BD%95%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/header.jpg">
+      <meta itemprop="name" content="л">
+      <meta itemprop="description" content="Find the bug of the world">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="SecNotes">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          对后台登录页面如何进行渗透测试
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Post created：2020-03-08 18:03:13 / 修改时间：18:05:49" itemprop="dateCreated datePublished" datetime="2020-03-08T18:03:13+08:00">2020-03-08</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">渗透测试</span></a>
+                </span>
+            </span>
+
+          
+            <span class="post-meta-item" title="Words">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-file-word-o"></i>
+              </span>
+                <span class="post-meta-item-text">Words：</span>
+              <span>3.2k</span>
+            </span>
+            <span class="post-meta-item" title="Reading time">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-clock-o"></i>
+              </span>
+                <span class="post-meta-item-text">Reading time &asymp;</span>
+              <span>3 分钟</span>
+            </span>
+            <div class="post-description">针对于某一个固定目标站点，如何进行相应的渗透测试，会从哪些方面入手……</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h4 id="0x01-检测登录功能"><a href="#0x01-检测登录功能" class="headerlink" title="0x01 检测登录功能"></a>0x01 检测登录功能</h4><p>是否存在密码安全策略，账号锁定策略，有没有验证码功能等，若以上均没有则可以直接利用爆破。</p>
+<h4 id="0x02-登录密码爆破"><a href="#0x02-登录密码爆破" class="headerlink" title="0x02 登录密码爆破"></a>0x02 登录密码爆破</h4><p>对于登录密码的爆破可以选择自己写脚本，也可以直接使用Burp suite中Intruder模块中的Payload Processing功能，选择相应的加密方法。也可以选择固定密码，字典爆破用户名。</p>
+<h4 id="0x03-目录扫描"><a href="#0x03-目录扫描" class="headerlink" title="0x03 目录扫描"></a>0x03 目录扫描</h4><p>可以选择御剑工具扫，也可以使用kali系统中的fuzz,一层一层的fuzz。<a href="https://www.bilibili.com/video/av42440134?from=search&amp;seid=15416953648987335561" target="_blank" rel="noopener">学习连接1</a> <a href="https://www.fuzzer.xyz/2019/03/29/WFUZZ%E4%BD%BF%E7%94%A8%E6%95%99%E7%A8%8B/" target="_blank" rel="noopener">学习连接2</a></p>
+<p>有些高手可以在扫除的目录中，在上传一些webshell</p>
+<h4 id="0x04-漏洞扫描"><a href="#0x04-漏洞扫描" class="headerlink" title="0x04 漏洞扫描"></a>0x04 漏洞扫描</h4><p>对于现在一些CMS已经非常成熟了，然后漏洞很难找到，但是可以从逻辑漏洞或者配置错误弱口令下手。对于一些Java开发的使用Structs 框架的，可以使用<a href="https://github.com/HatBoy/Struts2-Scan" target="_blank" rel="noopener">Structs2-Scan</a></p>
+<h4 id="0x05-弱口令"><a href="#0x05-弱口令" class="headerlink" title="0x05 弱口令"></a>0x05 弱口令</h4><p>中国弱口令使用排行</p>
+<figure class="highlight angelscript"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br></pre></td><td class="code"><pre><span class="line">次数 密码</span><br><span class="line"><span class="number">392</span> <span class="number">123456</span></span><br><span class="line"><span class="number">281</span> a123456</span><br><span class="line"><span class="number">165</span> <span class="number">123456</span>a</span><br><span class="line"><span class="number">161</span> <span class="number">5201314</span></span><br><span class="line"><span class="number">157</span> <span class="number">111111</span></span><br><span class="line"><span class="number">136</span> woaini1314</span><br><span class="line"> <span class="number">98</span> qq123456</span><br><span class="line"> <span class="number">98</span> <span class="number">123123</span></span><br><span class="line"> <span class="number">97</span> <span class="number">000000</span></span><br><span class="line"> <span class="number">93</span> <span class="number">1</span>qaz2wsx</span><br><span class="line"> <span class="number">83</span> <span class="number">1</span>q2w3e4r</span><br><span class="line"> <span class="number">80</span> qwe123</span><br><span class="line"> <span class="number">76</span> <span class="number">7758521</span></span><br><span class="line"> <span class="number">68</span> <span class="number">123</span>qwe</span><br><span class="line"> <span class="number">63</span> a123123</span><br><span class="line"> <span class="number">56</span> woaini520</span><br><span class="line"> <span class="number">55</span> <span class="number">123456</span>aa</span><br><span class="line"> <span class="number">52</span> <span class="number">1314520</span></span><br><span class="line"> <span class="number">52</span> <span class="number">100200</span></span><br><span class="line"> <span class="number">51</span> woaini</span><br><span class="line"> <span class="number">50</span> woaini123</span><br><span class="line"> <span class="number">50</span> <span class="number">123321</span></span><br><span class="line"> <span class="number">49</span> q123456</span><br><span class="line"> <span class="number">49</span> <span class="number">123456789</span></span><br><span class="line"> <span class="number">48</span> asd123</span><br><span class="line"> <span class="number">48</span> a123456789</span><br><span class="line"> <span class="number">48</span> <span class="number">5211314</span></span><br><span class="line"> <span class="number">48</span> <span class="number">123456789</span>a</span><br><span class="line"> <span class="number">47</span> z123456</span><br><span class="line"> <span class="number">47</span> asd123456</span><br><span class="line"> <span class="number">45</span> a5201314</span><br><span class="line"> <span class="number">42</span> zhang123</span><br><span class="line"> <span class="number">41</span> aa123456</span><br><span class="line"> <span class="number">40</span> <span class="number">123123</span>a</span><br><span class="line"> <span class="number">38</span> aptx4869</span><br><span class="line"> <span class="number">37</span> <span class="number">1</span>qazxsw2</span><br><span class="line"> <span class="number">37</span> <span class="number">1</span>q2w3e4r5t</span><br><span class="line"> <span class="number">36</span> <span class="number">5201314</span>a</span><br><span class="line"> <span class="number">35</span> aini1314</span><br><span class="line"> <span class="number">35</span> <span class="number">1</span>q2w3e</span><br><span class="line"> <span class="number">34</span> woaini521</span><br><span class="line"> <span class="number">34</span> q1w2e3r4</span><br><span class="line"> <span class="number">34</span> <span class="number">31415926</span></span><br><span class="line"> <span class="number">34</span> <span class="number">123456</span>qq</span><br><span class="line"> <span class="number">33</span> a111111</span><br><span class="line"> <span class="number">33</span> <span class="number">520520</span></span><br><span class="line"> <span class="number">33</span> <span class="number">1234</span>qwer</span><br><span class="line"> <span class="number">29</span> <span class="number">123456</span>abc</span><br><span class="line"> <span class="number">29</span> <span class="number">111111</span>a</span><br><span class="line"> <span class="number">29</span> <span class="number">110110</span></span><br><span class="line"> <span class="number">28</span> w123456</span><br><span class="line"> <span class="number">28</span> abc123</span><br><span class="line"> <span class="number">28</span> <span class="number">7758258</span></span><br><span class="line"> <span class="number">26</span> iloveyou</span><br><span class="line"> <span class="number">26</span> <span class="number">159753</span></span><br><span class="line"> <span class="number">25</span> qwer1234</span><br><span class="line"> <span class="number">25</span> a000000</span><br><span class="line"> <span class="number">24</span> zxc123</span><br><span class="line"> <span class="number">24</span> <span class="number">123</span>qweasd</span><br><span class="line"> <span class="number">24</span> <span class="number">123654</span></span><br><span class="line"> <span class="number">23</span> qq123123</span><br><span class="line"> <span class="number">23</span> abc123456</span><br><span class="line"> <span class="number">23</span> <span class="number">123456</span>q</span><br><span class="line"> <span class="number">22</span> qq5201314</span><br><span class="line"> <span class="number">22</span> <span class="number">12345678</span></span><br><span class="line"> <span class="number">21</span> <span class="number">456852</span></span><br><span class="line"> <span class="number">21</span> <span class="number">000000</span>a</span><br><span class="line"> <span class="number">20</span> <span class="number">1314521</span></span><br><span class="line"> <span class="number">19</span> zxc123456</span><br><span class="line"> <span class="number">19</span> asdasd</span><br><span class="line"> <span class="number">19</span> as123456</span><br><span class="line"> <span class="number">19</span> <span class="number">666666</span></span><br><span class="line"> <span class="number">19</span> <span class="number">521521</span></span><br><span class="line"> <span class="number">19</span> <span class="number">112233</span></span><br><span class="line"> <span class="number">18</span> q1w2e3</span><br><span class="line"> <span class="number">18</span> abcd1234</span><br><span class="line"> <span class="number">18</span> aaa123</span><br><span class="line"> <span class="number">17</span> qazwsx123</span><br><span class="line"> <span class="number">17</span> qaz123</span><br><span class="line"> <span class="number">17</span> aaaaaa</span><br><span class="line"> <span class="number">17</span> a123321</span><br><span class="line"> <span class="number">17</span> <span class="number">12</span>qwaszx</span><br><span class="line"> <span class="number">17</span> <span class="number">123000</span></span><br><span class="line"> <span class="number">17</span> <span class="number">11111111</span></span><br><span class="line"> <span class="number">16</span> zxcvbnm123</span><br><span class="line"> <span class="number">16</span> wang123</span><br><span class="line"> <span class="number">16</span> s123456</span><br><span class="line"> <span class="number">16</span> nihao123</span><br><span class="line"> <span class="number">16</span> love1314</span><br><span class="line"> <span class="number">16</span> caonima123</span><br><span class="line"> <span class="number">16</span> asdasd123</span><br><span class="line"> <span class="number">16</span> <span class="number">753951</span></span><br><span class="line"> <span class="number">16</span> <span class="number">5845201314</span></span><br><span class="line"> <span class="number">16</span> <span class="number">584520</span></span><br><span class="line"> <span class="number">16</span> <span class="number">159357</span></span><br><span class="line"> <span class="number">16</span> <span class="number">147258</span></span><br><span class="line"> <span class="number">16</span> <span class="number">1123581321</span></span><br><span class="line"> <span class="number">16</span> <span class="number">110120</span></span><br><span class="line"> <span class="number">15</span> hao123</span><br><span class="line"> <span class="number">15</span> a7758521</span><br></pre></td></tr></tbody></table></figure>
+
+<p>网络设备，基本像交换机、路由器、安全设备之类的，可以尝试一下默认密码</p>
+<figure class="highlight groovy"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">天融信防火墙，不需要证书 登录地址:<span class="string">https:</span><span class="comment">//192.168.1.254 用户名:superman 密码:talent 技术支持热线：8008105119</span></span><br><span class="line">天融信防火墙，不需要证书 登录地址:<span class="string">https:</span><span class="comment">//192.168.1.254：8080 用户名:superman 密码:talent！23 遇到设备需要把旧设备配置备份下来，再倒入新设备基于console口登陆，用户名，密码跟web界面一致 system config reset 清除配置 save 保存 联想网御防火墙，需要证书（最好用IE浏览器登录）</span></span><br><span class="line">登录地址:<span class="string">https:</span><span class="comment">//10.1.5.254:8889 用户名:admin 密码:leadsec@7766、administrator、bane@7766 技术支持热线：4008107766 010-56632666</span></span><br><span class="line">深信服防火墙（注安全设备管理地址不是唯一的） <span class="string">https:</span><span class="comment">//10.251.251.251</span></span><br><span class="line"><span class="string">https:</span><span class="comment">//10.254.254.254 用户名：admin 密码：admin 技术支持热线：4006306430</span></span><br><span class="line">启明星辰 <span class="string">https:</span><span class="comment">//10.1.5.254:8889 用户名：admin 密码：bane@7766</span></span><br><span class="line"><span class="string">https:</span><span class="comment">//10.50.10.45:8889 用户名：admin 密码：admin@123 电脑端IP：10.50.10.44/255.255.255.0 技术支持热线：4006243900</span></span><br><span class="line">juniper 登录地址:<span class="string">https:</span><span class="comment">//192.168.1.1 用户名:netscreen 密码:netscreen</span></span><br><span class="line">Cisco 登录地址:<span class="string">https:</span><span class="comment">//192.168.0.1 用户名:admin 密码:cisco</span></span><br><span class="line">Huawei 登录地址:<span class="string">http:</span><span class="comment">//192.168.0.1 用户名:admin 密码:Admin@123</span></span><br><span class="line">H3C 登录地址:<span class="string">http:</span><span class="comment">//192.168.0.1 用户名:admin 密码:admin 技术支持热线：4006306430</span></span><br><span class="line">绿盟IPS <span class="string">https:</span><span class="comment">//192.168.1.101 用户名: weboper 密码: weboper 配置重启生效</span></span><br><span class="line">网神防火墙GE1口 <span class="string">https:</span><span class="comment">//10.50.10.45 用户名：admin 密码：firewall 技术支持热线：4006108220</span></span><br><span class="line">深信服VPN： <span class="number">51111</span>端口 delanrecover</span><br><span class="line">华为VPN：账号：root 密码：mduadmin</span><br><span class="line">华为防火墙： admin Admin@<span class="number">123</span> eudemon</span><br><span class="line">eudemon Juniper防火墙： netscreen netscreen</span><br><span class="line">迪普 <span class="number">192.168</span><span class="number">.0</span><span class="number">.1</span> 默认的用户名和密码（admin/admin_default)</span><br><span class="line">山石 <span class="number">192.168</span><span class="number">.1</span><span class="number">.1</span> 默认的管理账号为hillstone，密码为hillstone</span><br><span class="line">安恒的明御防火墙 admin/adminadmin</span><br><span class="line">某堡垒机 shterm/shterm</span><br><span class="line">天融信的vpn test/<span class="number">123456</span></span><br></pre></td></tr></tbody></table></figure>
+
+<h4 id="0x06-社工"><a href="#0x06-社工" class="headerlink" title="0x06 社工"></a>0x06 社工</h4><p>根据信息生成密码字典</p>
+<p>kali中有cupp工具：<a href="https://github.com/Mebus/cupp" target="_blank" rel="noopener">https://github.com/Mebus/cupp</a> </p>
+<p>爬行网站关键信息创建字典：cewl</p>
+<p>其他的有hashcat</p>
+<h4 id="0x07-逻辑漏洞"><a href="#0x07-逻辑漏洞" class="headerlink" title="0x07 逻辑漏洞"></a>0x07 逻辑漏洞</h4><ol>
+<li>根据相应错误信息遍历用户是否存在</li>
+<li>任意用户注册</li>
+<li>修改注册发送包进行覆盖注册</li>
+<li>任意密码重置</li>
+<li>短信轰炸，（尝试在数据包后面添加空格或特殊字符要过限制）</li>
+<li>越权</li>
+<li>抓返回包，修改返回包参数，可能能够未授权就进入后台。Burp suite的Do intercept-&gt;Response to this request,，然后观察返回的参数，更改参数查看是否可以成功登录后台。</li>
+</ol>
+<h4 id="0x08-禁用JS"><a href="#0x08-禁用JS" class="headerlink" title="0x08 禁用JS"></a>0x08 禁用JS</h4><p>如果能够在不登录的情况下进入到应用界面，然后可以这时禁用JS，有些网页的URL跳转是由前端控制，禁用JS可能能访问部门模块，然后长传文件拿到getshell.</p>
+<p>火狐的禁用JS插件：Disable javaScript</p>
+<h4 id="0x09-查看前端源代码"><a href="#0x09-查看前端源代码" class="headerlink" title="0x09 查看前端源代码"></a>0x09 查看前端源代码</h4><p>工具: <a href="https://github.com/Threezh1/JSFinder" target="_blank" rel="noopener">JSFinder</a></p>
+<p>在网站的js文件中提取URL，子域名的工具，用在后台登陆界面抓取一些敏感的js文件效果也很不错 </p>
+<script>
+        document.querySelectorAll('.github-emoji')
+          .forEach(el => {
+            if (!el.dataset.src) { return; }
+            const img = document.createElement('img');
+            img.style = 'display:none !important;';
+            img.src = el.dataset.src;
+            img.addEventListener('error', () => {
+              img.remove();
+              el.style.color = 'inherit';
+              el.style.backgroundImage = 'none';
+              el.style.background = 'none';
+            });
+            img.addEventListener('load', () => {
+              img.remove();
+            });
+            document.body.appendChild(img);
+          });
+      </script>
+    </div>
+
+    
+    
+    
+  <div>
+    
+      <div>
+    
+        <div style="text-align:center;color: #555;font-size:14px;">-------------The End<i class="fa fa-paw"></i>-------------</div>
+    
+</div>
+    
+    </div>
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>л
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://comosk.github.io/2020/03/08/%E5%AF%B9%E5%90%8E%E5%8F%B0%E7%99%BB%E5%BD%95%E9%A1%B5%E9%9D%A2%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" title="对后台登录页面如何进行渗透测试">https://comosk.github.io/2020/03/08/对后台登录页面如何进行渗透测试/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+        
+
+  <div class="followme">
+    <p>欢迎关注我的其它发布渠道</p>
+
+    <div class="social-list">
+
+            <div class="social-item">
+              <a target="_blank" class="social-link" href="/atom.xml">
+                <span class="icon">
+                  <i class="fa fa-rss"></i>
+                </span>
+
+                <span class="label">RSS</span>
+              </a>
+            </div>
+    </div>
+  </div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" rel="tag"># 渗透测试</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/03/%E7%A7%BB%E5%8A%A8%E5%AE%89%E5%85%A8%E6%B5%8B%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95%E2%80%94%E2%80%94%E6%89%8B%E5%8A%BF%E5%AF%86%E7%A0%81%E6%8A%97%E6%94%BB%E5%87%BB%E6%B5%8B%E8%AF%95/" rel="prev" title="移动安全测渗透测试——手势密码抗攻击测试">
+      <i class="fa fa-chevron-left"></i> 移动安全测渗透测试——手势密码抗攻击测试
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+      <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=551340498&auto=0&height=66"></iframe>
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#0x01-检测登录功能"><span class="nav-text">0x01 检测登录功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x02-登录密码爆破"><span class="nav-text">0x02 登录密码爆破</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x03-目录扫描"><span class="nav-text">0x03 目录扫描</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x04-漏洞扫描"><span class="nav-text">0x04 漏洞扫描</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x05-弱口令"><span class="nav-text">0x05 弱口令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x06-社工"><span class="nav-text">0x06 社工</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x07-逻辑漏洞"><span class="nav-text">0x07 逻辑漏洞</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x08-禁用JS"><span class="nav-text">0x08 禁用JS</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#0x09-查看前端源代码"><span class="nav-text">0x09 查看前端源代码</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="л"
+      src="/images/header.jpg">
+  <p class="site-author-name" itemprop="name">л</p>
+  <div class="site-description" itemprop="description">Find the bug of the world</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">58</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Cosmosk" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Cosmosk" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.jianshu.com/u/9d1870e83453" title="jianshu → https:&#x2F;&#x2F;www.jianshu.com&#x2F;u&#x2F;9d1870e83453" rel="noopener" target="_blank"><i class="fa fa-fw fa-heartbeat"></i>jianshu</a>
+      </span>
+  </div>
+  <div class="cc-license motion-element" itemprop="license">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/zh-CN" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a>
+  </div>
+
+
+
+      </div>
+      
+      
+        <script type="text/javascript" charset="utf-8" src="/js/tagcloud.js"></script>
+        <script type="text/javascript" charset="utf-8" src="/js/tagcanvas.js"></script>
+        <div class="widget-wrap">
+          <h3 class="widget-title">Tag Cloud</h3>
+          <div id="myCanvasContainer" class="widget tagcloud">
+            <canvas width="250" height="250" id="resCanvas" style="width=100%">
+            <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/APK%E5%BA%94%E7%94%A8/" rel="tag">APK应用</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Android/" rel="tag">Android</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/DNS%E8%A7%A3%E6%9E%90/" rel="tag">DNS解析</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Python/" rel="tag">Python</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/VS-Code/" rel="tag">VS Code</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Web%E5%AE%89%E5%85%A8/" rel="tag">Web安全</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Xposed/" rel="tag">Xposed</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Xposed%E6%A1%86%E6%9E%B6/" rel="tag">Xposed框架</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/adb/" rel="tag">adb</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93/" rel="tag">不安全的数据传输</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E8%AE%BE%E7%BD%AE/" rel="tag">不安全的设置</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%E9%85%8D%E7%BD%AE/" rel="tag">不安全的配置</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BB%BB%E6%84%8F%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0-%E4%B8%8B%E8%BD%BD/" rel="tag">任意文件上传/下载</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86/" rel="tag">会话管理</a><span class="tag-list-count">7</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%BF%A1%E6%81%AF%E6%94%B6%E9%9B%86/" rel="tag">信息收集</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" rel="tag">基础知识</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%AE%89%E5%85%A8%E5%B7%A5%E5%85%B7/" rel="tag">安全工具</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%89%8B%E5%8A%BF%E5%AF%86%E7%A0%81/" rel="tag">手势密码</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%8F%E6%84%9F%E4%BF%A1%E6%81%AF%E6%B3%84%E9%9C%B2/" rel="tag">敏感信息泄露</a><span class="tag-list-count">10</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B3%A8%E5%85%A5%E7%B1%BB/" rel="tag">注入类</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%97%E9%80%8F%E6%B5%8B%E8%AF%95/" rel="tag">渗透测试</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%A7%BB%E5%8A%A8%E5%AE%89%E5%85%A8/" rel="tag">移动安全</a><span class="tag-list-count">2</span></li></ul>
+            </canvas>
+          </div>
+        </div>
+      
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">л</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    <span title="站点总字数">77k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:10</span>
+</div>
+  <div class="theme-info">themes – <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> v7.7.1
+  </div>
+  <div id="days"></div>
+<script>
+function show_date_time(){
+    window.setTimeout("show_date_time()", 1000);
+    BirthDay=new Date("02/27/2020 21:13:14");//修改为自己的blog建站时间
+    today=new Date();
+    timeold=(today.getTime()-BirthDay.getTime());
+    sectimeold=timeold/1000
+    secondsold=Math.floor(sectimeold);
+    msPerDay=24*60*60*1000
+    e_daysold=timeold/msPerDay
+    daysold=Math.floor(e_daysold);
+    e_hrsold=(e_daysold-daysold)*24;
+    hrsold=setzero(Math.floor(e_hrsold));
+    e_minsold=(e_hrsold-hrsold)*60;
+    minsold=setzero(Math.floor((e_hrsold-hrsold)*60));
+    seconds=setzero(Math.floor((e_minsold-minsold)*60));
+    document.getElementById('days').innerHTML="本站已安全运行"+daysold+"天"+hrsold+"小时"+minsold+"分"+seconds+"秒";
+}
+function setzero(i){
+    if (i<10)
+    {i="0" + i};
+    return i;
+}
+show_date_time();
+</script>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
